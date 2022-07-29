@@ -5,7 +5,10 @@ from echemfem import EchemSolver
 import numpy as np
 import csv
 """
-Model from Ehlinger et al, in preparation
+Model fromn
+Hawks, S.A., Ehlinger, V.M., Moore, T., Duoss, E.B., Beck, V.A., Weber, A.Z.
+and Baker, S.E., 2022. Analyzing Production Rate and Carbon Utilization
+Trade-offs in CO2RR Electrolyzers. ACS Energy Letters, 7, pp.2685-2693.
 """
 # operating conditions
 T = 293.15             # temperature (K)
