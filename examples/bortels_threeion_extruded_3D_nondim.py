@@ -3,6 +3,7 @@ import argparse
 from firedrake import *
 from mpi4py import MPI
 from firedrake.petsc import PETSc
+from firedrake import AssembledPC
 PETSc.Sys.popErrorHandler()
 
 set_log_level(DEBUG)
@@ -23,11 +24,16 @@ else:
     REDFACTOR = 1
 
 
+class CellIntegralPC(AssembledPC):
+    def form(self, pc, test, trial):
+        a, bcs = super().form(pc, test, trial)
+        return Form(a.integrals_by_type("cell")), bcs
+
 class BortelsSolver(EchemSolver):
     def __init__(self):
         # Create an initial coarse mesh
-        #plane_mesh = Mesh('bortels_structuredquad_nondim_coarse1664.msh')
-        plane_mesh = Mesh('bortels_unstructuredquad_nondim_coarse.msh')
+        plane_mesh = Mesh('bortels_structuredquad_nondim_coarse1664.msh')
+        #plane_mesh = Mesh('bortels_unstructuredquad_nondim_coarse.msh')
         plane_mesh_hierarchy = MeshHierarchy(
             plane_mesh, refinement_levels=args.ref_levels)
         hz = 6.0  # non-dim z length
@@ -133,6 +139,7 @@ class BortelsSolver(EchemSolver):
             overwrite_stats_file=args.overwrite_stats_file,
             p=args.degree)
 
+
         U_is = self.num_mass
         is_list = [str(i) for i in range(self.num_mass)]
         C_is = ",".join(is_list)
@@ -202,13 +209,19 @@ class BortelsSolver(EchemSolver):
                     "pmg_mg_levels_ksp_max_it": 1,
                     "pmg_mg_levels_pc_type": "none",
                     "pmg_mg_levels_ksp_norm_type": "unpreconditioned",
+                    # "pmg_mg_levels_": {
+                    # "pc_type": "python",
+                    # "pc_python_type": __name__ + "." + "CellIntegralPC",
+                    # "assembled": {
+                    # "pc_type": "jacobi"
+                    # }
                  "pmg_mg_coarse": { **{
                         "mat_type": "matfree",
-                        #"ksp_type": "fgmres",
-                        "ksp_type": "cg",
+                        "ksp_type": "fgmres",
+                        #"ksp_type": "cg",
                         "ksp_rtol": 1e-6,
-                        "ksp_monitor": None,
-                        "ksp_converged_reason": None,
+                        #"ksp_monitor": None,
+                        #"ksp_converged_reason": None,
                         },
                         **amg},
                 }
@@ -216,12 +229,12 @@ class BortelsSolver(EchemSolver):
             "mat_type": "matfree",
             "snes_view": None,
             "snes_monitor": None,
-            "snes_rtol": 1e-6,
+            "snes_rtol": 1e-2,
             "ksp_monitor": None,
             "ksp_converged_reason": None,
-            #"ksp_type": "fgmres",
-            "ksp_type": "cg",
-            "ksp_rtol": 1e-6,
+            "ksp_type": "fgmres",
+            #"ksp_type": "cg",
+            "ksp_rtol": 1e-1,
             "log_view": None,
              }
         if args.degree > 2:

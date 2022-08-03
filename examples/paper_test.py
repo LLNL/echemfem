@@ -1,6 +1,6 @@
 import pytest
 from firedrake import *
-from echemflow import EchemSolver
+from echemfem import EchemSolver
 from mpi4py import MPI
 from petsc4py import PETSc
 """
