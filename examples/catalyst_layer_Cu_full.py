@@ -125,8 +125,8 @@ class PorousSolver(EchemSolver):
         def reaction_CO2RR(u):
             CCO2 = u[0]
             CH = u[2]
-            Phi1 = u[6]
-            Phi2 = u[5]
+            Phi1 = u[7]
+            Phi2 = u[6]
 
             UCO2RR = U0CO2RR + ((R * T) / F) * ln(CH / cref)
             etaCO2RR = Phi1 - Phi2 - UCO2RR  # reaction overpotential (V)
@@ -135,8 +135,8 @@ class PorousSolver(EchemSolver):
 
         def reaction_HER(u):
             CH = u[2]
-            Phi1 = u[6]
-            Phi2 = u[5]
+            Phi1 = u[7]
+            Phi2 = u[6]
             UHER = U0HER + ((R * T) / F) * ln(CH / cref)
             etaHER = Phi1 - Phi2 - UHER  # reaction overpotential (V)
             iHER = i0HER * exp(-((alphacHER * F) / (R * T)) * etaHER)
@@ -188,7 +188,7 @@ class PorousSolver(EchemSolver):
                             "mass transfer coefficient": kMT[5],
                             })
 
-        physical_params = {"flow": ["diffusion", "migration", "electroneutrality", "porous"],
+        physical_params = {"flow": ["diffusion", "migration", "electroneutrality full", "porous"],
                            "F": F,  # C/mol
                            "R": R,  # J/K/mol
                            "T": T,  # K
@@ -220,12 +220,10 @@ class PorousSolver(EchemSolver):
                                  "bulk": (1,),  # U_liquid = 0, NC = k_x (C_0 - C)
                                  }
 
-    def set_velocity(self):
-        self.vel = as_vector([Constant(0)])  # m/s
-
 
 solver = PorousSolver()
 solver.setup_solver(initial_solve=False)
+#from IPython import embed; embed()
 Vlist = np.linspace(-0.70, -1.5, num=41)
 #Vlist = [-0.7]
 sol = []
@@ -236,8 +234,7 @@ for Vs in Vlist:
     solver.U_app.assign(Vs)
     print("V = %d mV" % (Vs * 1000))
     solver.solve()
-    cCO2, cOH, cH, cCO3, cHCO3, phi2, phi1 = solver.u.split()
-    cK = Function(solver.V).assign(2 * cCO3 + cOH + cHCO3 - cH)
+    cCO2, cOH, cH, cCO3, cHCO3, cK, phi2, phi1 = solver.u.split()
 
     x_ = Function(V).interpolate(solver.mesh.coordinates[0]).vector().dat.data
 
@@ -326,6 +323,8 @@ for Vs in Vlist:
     filename = "results/electrolyte%dmV.png" % (-Vs * 1000)
     plt.savefig(filename)
 
+
+
     phi1_ = phi1.vector().dat.data
     phi2_ = phi2.vector().dat.data
     cK_ = cK.vector().dat.data
@@ -339,7 +338,7 @@ for Vs in Vlist:
     i2_ = i2.dat.data
 
     Vname = np.rint(-Vs*1000)
-    filename = "echemfem_gde_data%dmV.csv" % Vname
+    filename = "full_gde_data%dmV.csv" % Vname
     with open(filename, mode = 'w') as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(['x','i1','V1','i2','V2','cK','cH','cHCO3','cOH','cCO3','cCO2'])            
