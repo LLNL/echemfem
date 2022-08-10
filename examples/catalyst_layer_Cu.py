@@ -220,10 +220,6 @@ class PorousSolver(EchemSolver):
                                  "bulk": (1,),  # U_liquid = 0, NC = k_x (C_0 - C)
                                  }
 
-    def set_velocity(self):
-        self.vel = as_vector([Constant(0)])  # m/s
-
-
 solver = PorousSolver()
 solver.setup_solver(initial_solve=False)
 Vlist = np.linspace(-0.70, -1.5, num=41)
