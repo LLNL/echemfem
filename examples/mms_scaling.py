@@ -23,6 +23,7 @@ if GLOBAL_N_RANKS % 8 == 0:
 else:
     REDFACTOR = 1
 
+p = Constant(args.degree)
 
 class CellIntegralPC(AssembledPC):
     def form(self, pc, test, trial):
@@ -32,7 +33,7 @@ class CellIntegralPC(AssembledPC):
 class BortelsSolver(EchemSolver):
     def __init__(self):
         if args.degree == 1:
-            N = 24
+            N = 12 #24
         else:
             N = 12
         plane_mesh = UnitSquareMesh(N, N, quadrilateral=True)
@@ -94,183 +95,9 @@ class BortelsSolver(EchemSolver):
             mesh,
             stats_file=args.stats_file,
             overwrite_stats_file=args.overwrite_stats_file,
-            p=args.degree)
+            p=args.degree,
+            p_penalty=p)
 
-
-        U_is = self.num_mass
-        is_list = [str(i) for i in range(self.num_mass)]
-        C_is = ",".join(is_list)
-    
-        
-        if args.degree == 1:
-            asm = {"pc_type": "asm",
-                   "pc_asm_overlap": 1,
-                   "sub": {
-                       "pc_type": "ilu",
-                       "pc_factor_levels": 0,
-                   }
-                   }
-            gmg = {"pc_type": "mg",
-                   "mg_levels_ksp_type": "richardson",
-                   "mg_levels": asm,
-                   "mg_coarse_ksp_type": "preonly",
-                   # "mg_coarse_pc_type": "lu",
-                   # "mg_coarse_pc_factor_mat_solver_type": "mumps",
-                   "mg_coarse": {
-                           "mat_type": "aij",
-                           # "pc_type": "lu",
-                           # "pc_factor_mat_solver_type": "mumps",
-                           "pc_type": "telescope",
-                           "pc_telescope_reduction_factor": REDFACTOR,
-                           "pc_telescope_subcomm_type": "contiguous",
-                           "telescope_pc_type": "lu",
-                           "telescope_pc_factor_mat_solver_type": "mumps",
-                       }
-                   }
-        
-        else:
-            asm = {"pc_type": "python",
-                   "pc_python_type": "firedrake.AssembledPC",
-                   "assembled": {
-                        "pc_type": "asm",
-                       "pc_asm_overlap": 1,
-                       "sub": {
-                           "pc_type": "ilu",
-                           "pc_factor_levels": 0,
-                        },
-                   },
-                   }
-            gmg = {"pc_type": "mg",
-                   "mg_levels_ksp_type": "richardson",
-                   "mg_levels": asm,
-                   "mg_coarse_ksp_type": "preonly",
-                   # "mg_coarse_pc_type": "lu",
-                   # "mg_coarse_pc_factor_mat_solver_type": "mumps",
-                   "mg_coarse": {
-                       "pc_type": "python",
-                       "pc_python_type": "firedrake.AssembledPC",
-                       "assembled": {
-                           "mat_type": "aij",
-                           # "pc_type": "lu",
-                           # "pc_factor_mat_solver_type": "mumps",
-                           "pc_type": "telescope",
-                           "pc_telescope_reduction_factor": REDFACTOR,
-                           "pc_telescope_subcomm_type": "contiguous",
-                           "telescope_pc_type": "lu",
-                           "telescope_pc_factor_mat_solver_type": "mumps",
-                       }
-                   }
-                   }
-
-        if args.degree == 1:
-            amg = {"pc_type": "hypre",
-                    "pc_hypre_boomeramg": {
-                    "strong_threshold": 0.7,
-                    "coarsen_type": "HMIS",
-                    "agg_nl": 3,
-                    "interp_type": "ext+i",
-                    "agg_num_paths": 5,
-                    },
-                   }
-        else:
-            amg = {"pc_type": "python",
-                   "pc_python_type": "firedrake.AssembledPC",
-                   "assembled": {"pc_type": "hypre",
-                                }
-                   }
-        #amg = {"pc_type": "python",
-        #       "pc_python_type": "firedrake.AssembledPC",
-        #       "assembled": {"pc_type": "lu",
-        #                    "pc_factor_mat_solver_type": "mumps",
-        #                    }
-        #       }
-        pmg = {"pc_type": "python",
-                "mat_type": "matfree",
-                "pc_python_type": "firedrake.P1PC",
-                    "pmg_mg_levels_ksp_type": "chebyshev",
-                    "pmg_mg_levels_ksp_max_it": 1,
-                    #"pmg_mg_levels_pc_type": "none",
-                    "pmg_mg_levels_ksp_norm_type": "unpreconditioned",
-                    "pmg_mg_levels_": {
-                    "pc_type": "python",
-                    "pc_python_type": __name__ + "." + "CellIntegralPC",
-                    "assembled": {
-                    "pc_type": "jacobi"
-                    }
-                    },
-                 "pmg_mg_coarse": { **{
-                        "mat_type": "matfree",
-                        #"ksp_type": "fgmres",
-                        "ksp_type": "cg",
-                        "ksp_rtol": 1e-3,
-                        #"ksp_monitor": None,
-                        #"ksp_converged_reason": None,
-                        },
-                        **amg},
-                }
-        if args.degree == 1:
-            mat_type = "aij"
-        else:
-            mat_type = "matfree"
-        custom_potential_solver={
-            "mat_type": mat_type,
-            #"snes_view": None,
-            #"snes_monitor": None,
-            #"snes_rtol": 1e-2,
-            "snes_type": "ksponly",
-            "ksp_monitor": None,
-            "ksp_converged_reason": None,
-            #"ksp_type": "fgmres",
-            "ksp_type": "cg",
-            "ksp_rtol": 1e-3,
-            "log_view": None,
-             }
-
-        if args.degree > 1:
-            custom_potential_solver = {** custom_potential_solver,
-                                        ** pmg}
-            psolver = pmg
-        else:
-            custom_potential_solver = {** custom_potential_solver,
-                                        ** amg}
-            psolver = amg
-        if args.csolver == "asm":
-            csolver = asm
-        else:
-            csolver = gmg
-
-        self.init_solver_parameters(
-            custom_solver={
-                "mat_type": mat_type,
-                "snes_view": None,
-                "snes_converged_reason": None,
-                "snes_monitor": None,
-                "snes_rtol": 1e-6,
-                "ksp_monitor": None,
-                "ksp_converged_reason": None,
-                "ksp_type": "fgmres",
-                "ksp_rtol": 1e-3,
-                "pc_type": "fieldsplit",
-                "pc_fieldsplit_0_fields": U_is,
-                "pc_fieldsplit_1_fields": 0,
-                "pc_fieldsplit_2_fields": 1,
-                "fieldsplit_0": {**{
-                    "ksp_converged_reason": None,
-                    "ksp_rtol": 1e-1,
-                    "ksp_type": "cg",
-                }, **psolver},
-                "fieldsplit_1": {**{
-                    "ksp_converged_reason": None,
-                    "ksp_rtol": 1e-1,
-                    "ksp_type": "gmres",
-                }, **csolver},
-                "fieldsplit_2": {**{
-                    "ksp_converged_reason": None,
-                    "ksp_rtol": 1e-1,
-                    "ksp_type": "gmres",
-                }, **csolver},
-            },
-            custom_potential_solver=custom_potential_solver)
 
     def set_boundary_markers(self):
         self.boundary_markers = {"bulk dirichlet": (1, 2, 3, 4,),
@@ -295,6 +122,266 @@ class BortelsSolver(EchemSolver):
 
 
 solver = BortelsSolver()
+
+# Custom solver parameters
+class CoarsenPenaltyPMGPC(P1PC):
+    def coarsen_form(self, form, replace_dict):
+        k = 1
+        replace_dict[solver.penalty_degree] = Constant(k)
+        replace_dict[solver.penalty_degreeU] = Constant(k)
+        #replace_dict[p] = Constant(k)
+        #replace_dict[p] = Constant(k)
+        return super(CoarsenPenaltyPMGPC, self).coarsen_form(form, replace_dict)
+
+U_is = solver.num_mass
+is_list = [str(i) for i in range(solver.num_mass)]
+C_is = ",".join(is_list)
+
+
+if args.degree == 1:
+    asm = {"pc_type": "asm",
+           "pc_asm_overlap": 1,
+           "sub": {
+               "pc_type": "ilu",
+               "pc_factor_levels": 0,
+           }
+           }
+    gmg = {"pc_type": "mg",
+           "mg_levels_ksp_type": "richardson",
+           "mg_levels": asm,
+           "mg_coarse_ksp_type": "preonly",
+           # "mg_coarse_pc_type": "lu",
+           # "mg_coarse_pc_factor_mat_solver_type": "mumps",
+           "mg_coarse": {
+                   "mat_type": "aij",
+                   # "pc_type": "lu",
+                   # "pc_factor_mat_solver_type": "mumps",
+                   "pc_type": "telescope",
+                   "pc_telescope_reduction_factor": REDFACTOR,
+                   "pc_telescope_subcomm_type": "contiguous",
+                   "telescope_pc_type": "lu",
+                   "telescope_pc_factor_mat_solver_type": "mumps",
+               }
+           }
+
+else:
+    asm = {"pc_type": "python",
+           "pc_python_type": "firedrake.AssembledPC",
+           "assembled": {
+                "pc_type": "asm",
+               "pc_asm_overlap": 1,
+               "sub": {
+                   "pc_type": "ilu",
+                   "pc_factor_levels": 0,
+                },
+           },
+           }
+    pmgasm = {"pc_type": "python",
+            "mat_type": "matfree",
+            #"pc_python_type": "firedrake.P1PC",
+            "pc_python_type": __name__+".CoarsenPenaltyPMGPC",
+                "pmg_mg_levels_ksp_type": "chebyshev",
+                "pmg_mg_levels_ksp_max_it": 1,
+                "pmg_mg_levels_ksp_monitor": None,
+                "pmg_mg_levels_ksp_converged_reason": None,
+                #"pmg_mg_levels_pc_type": "none",
+                "pmg_mg_levels_ksp_norm_type": "unpreconditioned",
+                "pmg_mg_levels_": {
+                "pc_type": "python",
+                "pc_python_type": __name__ + "." + "CellIntegralPC",
+                "assembled": {
+                "pc_type": "jacobi"
+                }
+                },
+             "pmg_mg_coarse": { **{
+                    "mat_type": "matfree",
+                    "ksp_type": "gmres",
+                    #"ksp_type": "preonly",
+                    "ksp_rtol": 1e-3,
+                    "ksp_monitor": None,
+                    "ksp_converged_reason": None,
+                    },
+                    **asm},
+             }
+    gmg = {"pc_type": "mg",
+           "mg_levels_ksp_type": "richardson",
+           "mg_levels": asm,
+           "mg_coarse_ksp_type": "preonly",
+           # "mg_coarse_pc_type": "lu",
+           # "mg_coarse_pc_factor_mat_solver_type": "mumps",
+           "mg_coarse": {
+               "pc_type": "python",
+               "pc_python_type": "firedrake.AssembledPC",
+               "assembled": {
+                   "mat_type": "aij",
+                   # "pc_type": "lu",
+                   # "pc_factor_mat_solver_type": "mumps",
+                   "pc_type": "telescope",
+                   "pc_telescope_reduction_factor": REDFACTOR,
+                   "pc_telescope_subcomm_type": "contiguous",
+                   "telescope_pc_type": "lu",
+                   "telescope_pc_factor_mat_solver_type": "mumps",
+               }
+           }
+           }
+
+if args.degree == 1:
+    amg = {"pc_type": "hypre",
+            #"pc_hypre_boomeramg": {
+            #"strong_threshold": 0.7,
+            #"coarsen_type": "HMIS",
+            #"agg_nl": 3,
+            #"interp_type": "ext+i",
+            #"agg_num_paths": 5,
+            #},
+           }
+else:
+    amg = {"pc_type": "python",
+           "pc_python_type": "firedrake.AssembledPC",
+           "assembled": {"pc_type": "hypre",
+                        }
+           }
+#amg = {"pc_type": "python",
+#       "pc_python_type": "firedrake.AssembledPC",
+#       "assembled": {"pc_type": "lu",
+#                    "pc_factor_mat_solver_type": "mumps",
+#                    }
+#       }
+pmg = {"pc_type": "python",
+        "mat_type": "matfree",
+        #"pc_python_type": "firedrake.P1PC",
+        "pc_python_type": __name__+".CoarsenPenaltyPMGPC",
+            "pmg_mg_levels_ksp_type": "chebyshev",
+            #"pmg_mg_levels_ksp_type": "richardson",
+            "pmg_mg_levels_ksp_max_it": 4,
+            "pmg_mg_levels_ksp_monitor": None,
+            "pmg_mg_levels_ksp_converged_reason": None,
+            #"pmg_mg_levels_pc_type": "none",
+            "pmg_mg_levels_ksp_norm_type": "unpreconditioned",
+            "pmg_mg_levels_": {
+            "pc_type": "python",
+            "pc_python_type": __name__ + "." + "CellIntegralPC",
+            "assembled": {
+            "pc_type": "jacobi"
+            }
+            },
+            #"pmg_coarse_mat_type": "aij", 
+            #"pmg_mg_coarse": {
+            #    "ksp_type": "cg",
+            #    "ksp_max_it": 30,
+            #    "ksp_rtol": 1e-5,
+            #    "pc_type": "mg",
+            #    "ksp_monitor": None,
+            #    "ksp_converged_reason": None,
+            #},
+         "pmg_mg_coarse": { **{
+                "mat_type": "matfree",
+                #"ksp_type": "fgmres",
+                "ksp_type": "cg",
+                "ksp_max_it": 30,
+                "ksp_rtol": 1e-5,
+                "ksp_monitor": None,
+                "ksp_converged_reason": None,
+                },
+         #       #**gmg},
+                **amg},
+        #"pmg_mg_coarse": {"ksp_type": "preonly",
+        #                 "pc_type": "python",
+        #                 "pc_python_type": "firedrake.AssembledPC",
+        #                 "assembled": {"pc_type": "lu",
+        #                            "pc_factor_mat_solver_type": "mumps",
+        #                            }
+        #                 },
+        }
+if args.degree == 1:
+    mat_type = "aij"
+else:
+    mat_type = "matfree"
+custom_potential_solver={
+    "mat_type": mat_type,
+    #"snes_view": None,
+    #"snes_monitor": None,
+    #"snes_rtol": 1e-2,
+    "snes_type": "ksponly",
+    "ksp_monitor": None,
+    "ksp_converged_reason": None,
+    #"ksp_type": "fgmres",
+    "ksp_type": "cg",
+    "ksp_rtol": 1e-5,
+    "log_view": None,
+     }
+
+if args.degree > 1:
+    custom_potential_solver = {** custom_potential_solver,
+                                ** pmg}
+    psolver = pmg
+else:
+    custom_potential_solver = {** custom_potential_solver,
+                                ** amg}
+    psolver = amg
+#custom_potential_solver= {"snes_type": "ksponly",
+#                         "ksp_type": "preonly",
+#                         "pc_type": "python",
+#                         "pc_python_type": "firedrake.AssembledPC",
+#                         "assembled": {"pc_type": "lu",
+#                                    "pc_factor_mat_solver_type": "mumps",
+#                                    }
+#                                         }
+if args.csolver == "asm":
+    csolver = asm
+    if args.degree > 1:
+        csolver = pmgasm
+else:
+    csolver = gmg
+
+solver.init_solver_parameters(
+    custom_solver={
+        "mat_type": mat_type,
+        "snes_view": None,
+        "snes_converged_reason": None,
+        "snes_monitor": None,
+        "snes_rtol": 1e-6,
+        "ksp_monitor": None,
+        "ksp_converged_reason": None,
+        "ksp_type": "fgmres",
+        "ksp_rtol": 1e-3,
+        "pc_type": "fieldsplit",
+        "pc_fieldsplit_1_fields": U_is,
+        "pc_fieldsplit_0_fields": 0,
+        "fieldsplit_1": {**{
+            "ksp_converged_reason": None,
+            "ksp_monitor": None,
+            "ksp_rtol": 1e-1,
+            "ksp_type": "cg",
+            #"ksp_type": "preonly",
+        }, **psolver},
+        #"fieldsplit_0": {"ksp_type": "preonly",
+        #                 "pc_type": "python",
+        #                 "pc_python_type": "firedrake.AssembledPC",
+        #                 "assembled": {"pc_type": "lu",
+        #                            "pc_factor_mat_solver_type": "mumps",
+        #                            }
+        #                 },
+        "fieldsplit_0": {**{
+            "ksp_converged_reason": None,
+            "ksp_rtol": 1e-1,
+            "ksp_type": "gmres",
+            }, **csolver}
+    },
+    custom_potential_solver=custom_potential_solver)
+#solver.init_solver_parameters(
+    #custom_solver={
+    #    "mat_type": "aij",
+    #    "snes_view": None,
+    #    "snes_converged_reason": None,
+    #    "snes_monitor": None,
+    #    "snes_rtol": 1e-6,
+    #    "ksp_monitor": None,
+    #    "ksp_converged_reason": None,
+    #    "ksp_type": "preonly",
+    #    "pc_type": "lu",
+    #    "pc_factor_mat_solver_type": "mumps"},
+    #custom_potential_solver=custom_potential_solver)
 
 solver.setup_solver(initial_solve=True)
 solver.solve()

@@ -41,7 +41,8 @@ class EchemSolver(ABC):
             stats_file="",
             overwrite_stats_file=False,
             p=1,
-            family="DG"):
+            family="DG",
+            p_penalty=None):
 
         self.physical_params = physical_params
         self.conc_params = conc_params
@@ -126,6 +127,12 @@ class EchemSolver(ABC):
         self.poly_degreeU = self.poly_degree
         self.poly_degreep = self.poly_degree
         self.family = family
+        # DG penalization parameter. defined here for PMG
+        if p_penalty is None:
+            p_penalty = Constant(p)
+        self.penalty_degree = p_penalty#Constant(self.poly_degree)
+        self.penalty_degreeU = p_penalty# Constant(self.poly_degreeU)
+        self.penalty_degreep = p_penalty# Constant(self.poly_degreep)
 
         quadrature_rule = None
         quadrature_rule_face = None
@@ -508,7 +515,8 @@ class EchemSolver(ABC):
                     v0 = TestFunction(self.Vu)
                     u0 = [us[i] for i in range(self.num_mass)]
                     u0.append(U0)
-                    a0, bcs = self.potential_poisson_form(u0, v0, self.conc_params, W=self.Vu, i_bc=0)
+                    #a0, bcs = self.potential_poisson_form(u0, v0, self.conc_params, W=self.Vu, i_bc=0)
+                    a0, bcs = self.charge_conservation_form(u0, v0, self.conc_params, W=self.Vu, i_bc=0)
                     solve(
                         a0 == 0,
                         U0,
@@ -1349,7 +1357,7 @@ class EchemSolver(ABC):
         if family == "DG":
             he = CellVolume(mesh) / FacetArea(mesh)
             C_IP = 10.0
-            D_IP = C_IP * Constant(max(self.poly_degree**2, 1)) / he
+            D_IP = C_IP * Max(self.penalty_degree**2, 1) / he
             K_IP = -1  # SIP
 
         a = 0.0
@@ -1510,7 +1518,7 @@ class EchemSolver(ABC):
         if family == "DG":
             he = CellVolume(mesh) / FacetArea(mesh)
             C_IP = 10.0
-            D_IP = C_IP * Constant(max(self.poly_degree**2, 1)) / he
+            D_IP = C_IP * Max(self.penalty_degree**2, 1) / he
             K_IP = -1  # SIP
 
         a = 0.0
@@ -1630,8 +1638,8 @@ class EchemSolver(ABC):
         if family == "DG":
             he = CellVolume(mesh) / FacetArea(mesh)
             C_IP = Constant(10.0)
-            D_IP = C_IP * Constant(max(self.poly_degree**2, 1)) / he
-            D_IP2 = C_IP * Constant(max((self.poly_degreeU)**2, 1)) / he
+            D_IP = C_IP * Max(self.penalty_degree**2, 1) / he
+            D_IP2 = C_IP * Max(self.penalty_degreeU**2, 1) / he
             K_IP = -1  # SIP
 
         n_c = self.num_c
@@ -1773,8 +1781,8 @@ class EchemSolver(ABC):
         if family == "DG":
             he = CellVolume(mesh) / FacetArea(mesh)
             C_IP = 10.0
-            D_IP = C_IP * Constant(max(self.poly_degree**2, 1)) / he
-            D_IP2 = C_IP * Constant(max((self.poly_degreeU)**2, 1)) / he
+            D_IP = C_IP * Max(self.penalty_degree**2, 1) / he
+            D_IP2 = C_IP * Max((self.penalty_degreeU)**2, 1) / he
             K_IP = -1  # SIP
 
         n_c = self.num_c
@@ -1828,7 +1836,7 @@ class EchemSolver(ABC):
                     D = self.effective_diffusion(D)
                 if eps_r is None or eps_0 is None:
                     K_U += z**2 * F**2 * D * C / R / T
-                else:
+                elif z != 0:
                     a -= F * z * C * test_fn * self.dx()
 
                 # Echem reaction
@@ -1925,9 +1933,9 @@ class EchemSolver(ABC):
         if family == "DG":
             he = CellVolume(mesh) / FacetArea(mesh)
             C_IP = 10.0
-            D_IP = C_IP * Constant(max(self.poly_degree**2, 1)) / he
-            D_IP2 = C_IP * Constant(max((self.poly_degreep)**2, 1)) / he
-            D_IP3 = C_IP * Constant(max((self.poly_degreeU)**2, 1)) / he
+            D_IP = C_IP * Max(self.penalty_degree**2, 1) / he
+            D_IP2 = C_IP * Max((self.penalty_degreep)**2, 1) / he
+            D_IP3 = C_IP * Max((self.penalty_degreeU)**2, 1) / he
             K_IP = -1  # SIP
 
         n_c = self.num_c
@@ -2075,7 +2083,7 @@ class EchemSolver(ABC):
         if family == "DG":
             he = CellVolume(mesh) / FacetArea(mesh)
             C_IP = 10.0
-            D_IP2 = C_IP * Constant(max(self.poly_degreep**2, 1)) / he
+            D_IP2 = C_IP * Max(self.penalty_degreep**2, 1) / he
             K_IP = -1  # SIP
 
         a = 0.0
@@ -2190,8 +2198,8 @@ class EchemSolver(ABC):
         if family == "degree":
             he = CellVolume(mesh) / FacetArea(mesh)
             C_IP = 10.0
-            D_IP = C_IP * Constant(max(self.poly_degree**2, 1)) / he
-            D_IP2 = C_IP * Constant(max((self.poly_degreep)**2, 1)) / he
+            D_IP = C_IP * Max(self.penalty_degree**2, 1) / he
+            D_IP2 = C_IP * Max((self.penalty_degreep)**2, 1) / he
             K_IP = -1  # SIP
 
         n_g = self.num_g

@@ -40,7 +40,7 @@ my $str = <<END;
 #!/bin/bash
 #SBATCH -N $N
 #SBATCH -A sosu
-#SBATCH -t 60
+#SBATCH -t 180
 #SBATCH --output=$logfilename
 
 /usr/bin/time -v srun -N $N -n $np python bortels_threeion_extruded_3D_nondim.py \\

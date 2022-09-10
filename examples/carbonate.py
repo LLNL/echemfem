@@ -96,6 +96,8 @@ class CarbonateSolver(EchemSolver):
         cefHCOO = 0.10
         cefH2 = 0.40
         if name == "CO2":
+            print(-(j / F) * (cefHCOO / zeffHCOO + cefCO / zeffCO
+                               + cefCH4 / zeffCH4 + 2 * cefC2H4 / zeffC2H4))
             return -(j / F) * (cefHCOO / zeffHCOO + cefCO / zeffCO
                                + cefCH4 / zeffCH4 + 2 * cefC2H4 / zeffC2H4)
         if name == "OH":
