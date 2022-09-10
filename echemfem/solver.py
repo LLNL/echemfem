@@ -1828,7 +1828,7 @@ class EchemSolver(ABC):
                     D = self.effective_diffusion(D)
                 if eps_r is None or eps_0 is None:
                     K_U += z**2 * F**2 * D * C / R / T
-                else:
+                elif z != 0.0:
                     a -= F * z * C * test_fn * self.dx()
 
                 # Echem reaction
