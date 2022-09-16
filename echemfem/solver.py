@@ -62,6 +62,7 @@ class EchemSolver(ABC):
         self.flow = {"advection": False,
                      "diffusion": False,
                      "migration": False,
+                     "finite size": False,
                      "electroneutrality": False,
                      "poisson": False,
                      "porous": False,
@@ -515,8 +516,10 @@ class EchemSolver(ABC):
                     v0 = TestFunction(self.Vu)
                     u0 = [us[i] for i in range(self.num_mass)]
                     u0.append(U0)
-                    #a0, bcs = self.potential_poisson_form(u0, v0, self.conc_params, W=self.Vu, i_bc=0)
-                    a0, bcs = self.charge_conservation_form(u0, v0, self.conc_params, W=self.Vu, i_bc=0)
+                    if self.flow["electroneutrality"]:
+                        a0, bcs = self.charge_conservation_form(u0, v0, self.conc_params, W=self.Vu, i_bc=0)
+                    else:
+                        a0, bcs = self.potential_poisson_form(u0, v0, self.conc_params, W=self.Vu, i_bc=0)
                     solve(
                         a0 == 0,
                         U0,
@@ -1339,6 +1342,7 @@ class EchemSolver(ABC):
         advection-diffusion term.
         """
         
+        n_c = self.num_c
         i_c = conc_params["i_c"]
         D = conc_params["diffusion coefficient"]
         C_0 = conc_params["bulk"]
@@ -1419,7 +1423,7 @@ class EchemSolver(ABC):
                 flow_N = 0.5 * (dot(flow, n) + abs(dot(flow, n)))
                 a += (test_fn('+') - test_fn('-')) * \
                     (flow_N('+') * C('+') - flow_N('-') * C('-')) * self.dS()
-            elif True: # SUPG
+            elif False: # SUPG
                 hk = CellDiameter(mesh)
                 u_norm = inner(flow, flow) ** 0.5
                 Pe = hk / 2. * u_norm / D
@@ -1428,6 +1432,19 @@ class EchemSolver(ABC):
                 delta_k = hk / 2. / u_norm * Pe_f
                 # p = 1
                 a += delta_k * inner(dot(flow, grad(C)), dot(flow, grad(test_fn))) * dx()
+
+            # TODO: define this term outside this function for efficiency?
+            if self.flow["finite size"]:
+                NA = self.physical_params["Avogadro constant"]
+                denominator = 1.0
+                numerator = 0.0
+                for i in range(n_c):
+                    ai = self.conc_params[i].get("solvated diameter")
+                    if ai is not None and ai != 0.0:
+                        denominator -= NA * ai ** 3 * u[i]
+                        numerator += NA * ai ** 3 * grad(u[i])
+                a += D * C * inner(numerator / denominator,  grad(test_fn)) * dx()
+
 
             applied = self.boundary_markers.get("applied")
             liquid_applied = self.boundary_markers.get("liquid_applied")
@@ -1774,6 +1791,7 @@ class EchemSolver(ABC):
         eps_r = self.physical_params.get("relative permittivity")
         bulk = self.boundary_markers.get("bulk")
         inlet = self.boundary_markers.get("inlet")
+        robin = self.boundary_markers.get("robin")
 
         family = self.family
         mesh = self.mesh
@@ -1827,7 +1845,7 @@ class EchemSolver(ABC):
                         test_fn * self.dx(domain=self.mesh)
 
             neumann = self.boundary_markers.get("neumann")
-            if (neumann is not None) and (z != 0.0):
+            if (neumann is not None) and (z != 0.0) and eps_r is None and eps_0 is None:
                 a -= z * F * test_fn * \
                     self.neumann(C, conc_params[i], u) * self.ds(neumann)
             if not solid:
@@ -1909,6 +1927,13 @@ class EchemSolver(ABC):
                     bcs.append(DirichletBC(self.W.sub(i_u), U_0, dirichlet))
                 else:
                     bcs.append(DirichletBC(W.sub(i_bc), U_0, dirichlet)) # for initial guess
+
+        if robin is not None:
+            U_0 = self.U_app 
+            a -= self.physical_params["gap capacitance"] * \
+                (U_0 - U) * test_fn * self.ds(robin)
+
+
 
         return a, bcs
 
