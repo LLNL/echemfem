@@ -72,6 +72,8 @@ class EchemSolver(ABC):
                      # Need a second velocity for gas phase
                      }
 
+        self.save_solutions = True
+
         for physics in physical_params["flow"]:
             self.flow[physics] = True
         if (not self.flow["migration"]) and self.flow["electroneutrality"]:
@@ -590,7 +592,8 @@ class EchemSolver(ABC):
 
     def solve(self):
         self.echem_solver.solve()
-        self.output_state(self.u)
+        if self.save_solutions:
+            self.output_state(self.u)
 
         if len(self.stats_file) > 0:
             solver = self.echem_solver
@@ -644,6 +647,8 @@ class EchemSolver(ABC):
                     "PCApply": pcapply_time,
                     "JacobianEval": jac_time,
                     "FunctionEval": residual_time,
+                    "mesh_name": self.mesh.name,
+                    "csolver": self.csolver,
                     # "mesh_size": problem.N * (2**ref),
                 }
 
@@ -1307,6 +1312,12 @@ class EchemSolver(ABC):
         if family == "DG" and layers is not None:
             # Create function spaces for an extruded mesh
             PETSc.Sys.Print("Creating function spaces for an extruded mesh")
+            #e = FiniteElement("DQ", cell=self.mesh.ufl_cell(), degree=self.poly_degree, variant='fdm')
+            #self.V = FunctionSpace(self.mesh, e)
+            #e = FiniteElement("DQ", cell=self.mesh.ufl_cell(), degree=self.poly_degreeU, variant='fdm')
+            #self.Vu = FunctionSpace(self.mesh, e)
+            #e = FiniteElement("DQ", cell=self.mesh.ufl_cell(), degree=self.poly_degreep, variant='fdm')
+            #self.Vp = FunctionSpace(self.mesh, e)
             self.V = FunctionSpace(
                 self.mesh,
                 "DQ",
@@ -1394,8 +1405,8 @@ class EchemSolver(ABC):
                     a -= inner(D * grad(C), n * test_fn) * self.ds(bulk_dirichlet)
                     a += inner(D_IP * D * (C - C_0) * n,
                                test_fn * n) * self.ds(bulk_dirichlet)
-                else:
-                    bcs.append(DirichletBC(self.W.sub(i_c), C_0, bulk_dirichlet))
+                #else:
+                bcs.append(DirichletBC(self.W.sub(i_c), C_0, bulk_dirichlet))
 
             if gas is not None and C_gas is not None:
                 if family == "DG":
@@ -1403,8 +1414,8 @@ class EchemSolver(ABC):
                     a -= inner(D * grad(C), n * test_fn) * self.ds(gas)
                     a += inner(D_IP * D * (C - C_gas) * n,
                                test_fn * n) * self.ds(gas)
-                else:
-                    bcs.append(DirichletBC(self.W.sub(i_c), C_gas, gas))
+                #else:
+                bcs.append(DirichletBC(self.W.sub(i_c), C_gas, gas))
 
         if self.flow["advection"]:
             vel = self.vel
@@ -1577,8 +1588,8 @@ class EchemSolver(ABC):
                     a -= inner(Davg * grad(Mn), n * test_fn) * self.ds(gas)
                     a += inner(D_IP * Davg * (Mn - Mn_gas)
                                * n, test_fn * n) * self.ds(gas)
-                else:
-                    bcs.append(DirichletBC(self.W.sub(i_g), X_gas, gas))
+                #else:
+                bcs.append(DirichletBC(self.W.sub(i_g), X_gas, gas))
         # convection
         if self.flow["advection"] or self.flow["advection gas only"]:
             flow = rhog * vel
@@ -1771,11 +1782,11 @@ class EchemSolver(ABC):
                 a -= inner(K_U * grad(U), n * test_fn) * self.ds(dirichlet)
                 a += inner(D_IP2 * K_U * (U - U_0)
                            * n, test_fn * n) * self.ds(dirichlet)
+            #else:
+            if i_bc is None:
+                bcs.append(DirichletBC(self.W.sub(n_m), U_0, dirichlet))
             else:
-                if i_bc is None:
-                    bcs.append(DirichletBC(self.W.sub(n_m), U_0, dirichlet))
-                else:
-                    bcs.append(DirichletBC(W.sub(i_bc), U_0, dirichlet)) # for initial guess
+                bcs.append(DirichletBC(W.sub(i_bc), U_0, dirichlet)) # for initial guess
 
         return a, bcs
 
@@ -1922,11 +1933,11 @@ class EchemSolver(ABC):
                 a -= inner(K_U * grad(U), n * test_fn) * self.ds(dirichlet)
                 a += inner(D_IP2 * K_U * (U - U_0)
                            * n, test_fn * n) * self.ds(dirichlet)
+            #else:
+            if i_bc is None:
+                bcs.append(DirichletBC(self.W.sub(i_u), U_0, dirichlet))
             else:
-                if i_bc is None:
-                    bcs.append(DirichletBC(self.W.sub(i_u), U_0, dirichlet))
-                else:
-                    bcs.append(DirichletBC(W.sub(i_bc), U_0, dirichlet)) # for initial guess
+                bcs.append(DirichletBC(W.sub(i_bc), U_0, dirichlet)) # for initial guess
 
         if robin is not None:
             U_0 = self.U_app 
@@ -2004,11 +2015,11 @@ class EchemSolver(ABC):
                 a -= inner(K_p * grad(p), n * test_fn) * self.ds(dirichlet)
                 a += inner(D_IP2 * K_p * (p - p_0)
                            * n, test_fn * n) * self.ds(dirichlet)
+            #else:
+            if i_bc is None:
+                bcs.append(DirichletBC(self.W.sub(self.i_pl), p_0, dirichlet))
             else:
-                if i_bc is None:
-                    bcs.append(DirichletBC(self.W.sub(self.i_pl), p_0, dirichlet))
-                else:
-                    bcs.append(DirichletBC(W.sub(i_bc), U_0, dirichlet)) # for initial guess
+                bcs.append(DirichletBC(W.sub(i_bc), U_0, dirichlet)) # for initial guess
 
         for i in range(n_c):
             z = conc_params[i]["z"]
@@ -2164,10 +2175,10 @@ class EchemSolver(ABC):
                 a -= inner(K_p * grad(p), n * test_fn) * self.ds(gas_inlet)
                 a += inner(D_IP2 * K_p * (p - p_0)
                            * n, test_fn * n) * self.ds(gas_inlet)
-            else:
-                if i_bc is None:
-                    bcs.append(DirichletBC(self.W.sub(self.i_pg), p_0, gas_inlet))
-                    bcs.append(DirichletBC(W.sub(i_bc), p_0, gas_inlet))
+            #else:
+            if i_bc is None:
+                bcs.append(DirichletBC(self.W.sub(self.i_pg), p_0, gas_inlet))
+                bcs.append(DirichletBC(W.sub(i_bc), p_0, gas_inlet))
 
         # Echem reaction
         name = gas_params["name"]
@@ -2281,8 +2292,8 @@ class EchemSolver(ABC):
                 a -= inner(K_p * grad(p), n * test_fn) * self.ds(gas)
                 a += inner(D_IP2 * K_p * (p - p_0)
                            * n, test_fn * n) * self.ds(gas)
-            else:
-                bcs.append(DirichletBC(self.W.sub(self.i_pg), p_0, gas_inlet))
+            #else:
+            bcs.append(DirichletBC(self.W.sub(self.i_pg), p_0, gas_inlet))
 
         fpg = self.physical_params.get("gas pressure source")
         if fpg is not None:
