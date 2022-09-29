@@ -1417,6 +1417,19 @@ class EchemSolver(ABC):
                 #else:
                 bcs.append(DirichletBC(self.W.sub(i_c), C_gas, gas))
 
+            # TODO: define this term outside this function for efficiency?
+            if self.flow["finite size"]:
+                NA = self.physical_params["Avogadro constant"]
+                denominator = 1.0
+                numerator = 0.0
+                for i in range(n_c):
+                    ai = self.conc_params[i].get("solvated diameter")
+                    if ai is not None and ai != 0.0:
+                        denominator -= NA * ai ** 3 * u[i]
+                        numerator += NA * ai ** 3 * grad(u[i])
+                a += D * C * inner(numerator / denominator,  grad(test_fn)) * dx()
+
+
         if self.flow["advection"]:
             vel = self.vel
         # convection and migration
@@ -1443,18 +1456,6 @@ class EchemSolver(ABC):
                 delta_k = hk / 2. / u_norm * Pe_f
                 # p = 1
                 a += delta_k * inner(dot(flow, grad(C)), dot(flow, grad(test_fn))) * dx()
-
-            # TODO: define this term outside this function for efficiency?
-            if self.flow["finite size"]:
-                NA = self.physical_params["Avogadro constant"]
-                denominator = 1.0
-                numerator = 0.0
-                for i in range(n_c):
-                    ai = self.conc_params[i].get("solvated diameter")
-                    if ai is not None and ai != 0.0:
-                        denominator -= NA * ai ** 3 * u[i]
-                        numerator += NA * ai ** 3 * grad(u[i])
-                a += D * C * inner(numerator / denominator,  grad(test_fn)) * dx()
 
 
             applied = self.boundary_markers.get("applied")
