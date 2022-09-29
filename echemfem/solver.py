@@ -63,7 +63,8 @@ class EchemSolver(ABC):
                      "diffusion": False,
                      "migration": False,
                      "finite size": False,
-                     "electroneutrality": False,
+                     "electroneutrality": False, # elimination and charge eqn
+                     "electroneutrality full": False, # no elimination
                      "poisson": False,
                      "porous": False,
                      "darcy": False,
@@ -81,7 +82,7 @@ class EchemSolver(ABC):
                 'Electroneutrality constraint requires Migration')
         if self.flow["migration"] and (
             (not self.flow["electroneutrality"]) and (
-                not self.flow["poisson"])):
+                not self.flow["poisson"]) and (not self.flow["electroneutrality full"])):
             raise NotImplementedError(
                 'Migration requires Electroneutrality or Poisson')
         if self.flow["darcy"] and (not self.flow["porous"]):
@@ -184,7 +185,7 @@ class EchemSolver(ABC):
         spaces = []
         for i in range(self.num_mass):
             spaces.append(self.V)
-        if self.flow["poisson"] or self.flow["electroneutrality"]:
+        if self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]:
             spaces.append(self.Vu)
             if self.flow["porous"]:
                 spaces.append(self.Vu)
@@ -215,7 +216,7 @@ class EchemSolver(ABC):
             self.Vc = VectorFunctionSpace(
                 mesh, family, self.poly_degree, dim=self.num_mass)
             spaces.append(self.Vc)
-            if self.flow["poisson"] or self.flow["electroneutrality"]:
+            if self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]:
                 spaces.append(self.Vu)
                 if self.flow["porous"]:
                     spaces.append(self.Vu)
@@ -242,7 +243,7 @@ class EchemSolver(ABC):
 
         # setup pressure variables for Darcy's law
         if self.flow["darcy"]:
-            if self.flow["poisson"] or ["electroneutrality"]:
+            if self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]:
                 if self.flow["advection"]:
                     self.i_pl = self.num_mass + 2
                     self.pl = us[self.i_pl]
@@ -281,7 +282,7 @@ class EchemSolver(ABC):
                 us[self.num_liquid:self.num_liquid + self.num_gas], self.pg, gas_params)
 
         # setup applied current
-        if self.flow["poisson"] or self.flow["electroneutrality"]:
+        if self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]:
             U_app = physical_params["U_app"]
             if isinstance(U_app, (Constant, Function)):
                 self.U_app = U_app
@@ -301,9 +302,13 @@ class EchemSolver(ABC):
         # mass conservation of aqueous species
         for i in range(self.num_liquid):
             if conc_params[i].get("eliminated") is None:
+                if self.flow["electroneutrality full"] and i == self.num_liquid-1:
+                    test_fn = v[i+1] # to avoid zeroes on the diagonal. last species must have a charge
+                else:
+                    test_fn = v[i]
                 conc_params[i]["i_c"] = i
                 a, bc = self.mass_conservation_form(
-                    us[i], v[i], conc_params[i], u=us)
+                    us[i], test_fn, conc_params[i], u=us)
                 Form += a
                 bcs += bc
         # add bulk reaction terms to liquid mass conservation equations
@@ -340,9 +345,13 @@ class EchemSolver(ABC):
                                                 solid=False)
             Form += a
             bcs += bc
+        elif self.flow["electroneutrality full"]:
+            a, bc = self.electroneutrality_form(us, v[self.num_liquid - 1], conc_params)
+            Form += a
+            bcs += bc
         # Poisson equation for the solid potential
         if self.flow["porous"] and (
-                self.flow["poisson"] or self.flow["electroneutrality"]):
+                self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]):
             a, bc = self.potential_poisson_form(us,
                                                 v[self.num_mass + 1],
                                                 conc_params,
@@ -387,7 +396,7 @@ class EchemSolver(ABC):
         print("Species information")
         for c in self.conc_params:
             print("> {}".format(c["name"]))
-            if self.flow["electroneutrality"] or self.flow["poisson"]:
+            if self.flow["electroneutrality"] or self.flow["poisson"] or self.flow["electroneutrality full"]:
                 print("  z = {}".format(c["z"]))
 
         print("Solver information")
@@ -397,7 +406,7 @@ class EchemSolver(ABC):
             print("{} \t\t {}".format(c["name"], self.V.dim()))
             total_dof_count += self.V.dim()
 
-        if "poisson" in self.physical_params["flow"] or "electroneutrality" in self.physical_params["flow"]:
+        if "poisson" in self.physical_params["flow"] or "electroneutrality" in self.physical_params["flow"] or self.flow["electroneutrality full"]:
             print("Potential \t {}".format(self.Vu.dim()))
             total_dof_count += self.Vu.dim()
 
@@ -419,7 +428,7 @@ class EchemSolver(ABC):
             if self.vector_mix:
                 i_Ul = 0
                 i_Us = 0
-                if self.flow["electroneutrality"] or self.flow["poisson"]:
+                if self.flow["electroneutrality"] or self.flow["poisson"] or self.flow["electroneutrality full"]:
                     i_Ul = 1
                     i_Us = 1
                     if self.flow["porous"]:
@@ -429,7 +438,7 @@ class EchemSolver(ABC):
                     if self.gas_params:
                         i_pg = i_pl + 1
             else:
-                if self.flow["electroneutrality"] or self.flow["poisson"]:
+                if self.flow["electroneutrality"] or self.flow["poisson"] or self.flow["electroneutrality full"]:
                     i_Ul = self.num_mass
                     if self.flow["porous"]:
                         i_Us = self.num_mass + 1
@@ -476,9 +485,11 @@ class EchemSolver(ABC):
                         u.sub(i_pg).interpolate(p_gas)
 
             if self.flow["porous"] and (
-                    self.flow["electroneutrality"] or self.flow["poisson"]):
-                u.sub(i_Ul).assign(self.U_app)
-                u.sub(i_Us).assign(Constant(1e-4))
+                    self.flow["electroneutrality"] or self.flow["poisson"] or self.flow["electroneutrality full"]):
+                #u.sub(i_Ul).assign(self.U_app)
+                #u.sub(i_Us).assign(Constant(1e-4))
+                u.sub(i_Ul).assign(Constant(0))
+                u.sub(i_Us).assign(self.U_app)
                 if initial_solve:
                     Wu = self.Vu * self.Vu
                     U0 = Function(Wu)
@@ -492,7 +503,7 @@ class EchemSolver(ABC):
                             u0, v0, self.conc_params, W=Wu, i_bc=0)
                     else:
                         a0, bcs = self.potential_poisson_form(
-                            u0, v0, self.conc_params, i_bc=0)
+                            u0, v0, self.conc_params, W=Wu, i_bc=0)
                     a, bc = self.potential_poisson_form(u0, v1,
                             self.conc_params, solid=True, W=Wu, i_bc=1)
                     a0 += a
@@ -511,7 +522,7 @@ class EchemSolver(ABC):
                     u.sub(i_Ul).assign(U0.sub(0))
                     u.sub(i_Us).assign(U0.sub(1))
 
-            elif (self.flow["electroneutrality"] or self.flow["poisson"]):
+            elif (self.flow["electroneutrality"] or self.flow["poisson"] or self.flow["electroneutrality full"]):
                 U0 = Function(self.Vu)
                 U0.assign(self.U_app / 2)
                 if initial_solve:
@@ -694,7 +705,7 @@ class EchemSolver(ABC):
                     name=self.conc_params[i]["name"]).assign(
                     uviz[i]))
 
-        if self.flow["poisson"] or self.flow["electroneutrality"]:
+        if self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]:
             collection.append(Function(self.Vu,
                               name="Liquid Potential").assign(uviz[self.num_mass]))
 
@@ -759,7 +770,7 @@ class EchemSolver(ABC):
                 Function(self.V, name=self.gas_params[self.num_gas]["name"]).assign(X_el))
             File("results/saturation.pvd").write(
                 Function(self.V, name="Saturation").interpolate(self.Sw))
-        if self.flow["poisson"] or self.flow["electroneutrality"]:
+        if self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]:
             File("results/liquid_potential.pvd").write(Function(self.Vu,
                                                                 name="Liquid Potential").assign(uviz[self.num_mass]))
             if self.flow["porous"]:
@@ -1378,7 +1389,7 @@ class EchemSolver(ABC):
         a = 0.0
         bcs = [] # Dirichlet BCs for CG
 
-        if self.flow["poisson"] or self.flow["electroneutrality"]:
+        if self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]:
             U = u[self.num_mass]
             z = conc_params["z"]
             F = self.physical_params["F"]
@@ -1791,6 +1802,39 @@ class EchemSolver(ABC):
 
         return a, bcs
 
+    def electroneutrality_form(self, u, test_fn, conc_params):
+        """Returns weak form for the electroneutrality condition 
+        Only useable for CG
+        """
+
+        n_c = self.num_c
+        n_m = self.num_mass
+        a = 0.0
+        bcs = []
+
+        for i in range(n_c):
+            z = conc_params[i].get("z")
+            if z != 0:
+                a += z * u[i] * test_fn * self.dx()
+
+        bulk = self.boundary_markers.get("bulk")
+        is_bulk = (bulk is not None)
+        applied = self.boundary_markers.get("applied")
+        is_applied = applied is not None and not self.flow["porous"]
+        is_applied = is_applied or (
+            self.boundary_markers.get("liquid applied") is not None)
+        if is_bulk or is_applied:
+            if is_applied:
+                U_0 = self.U_app
+                dirichlet = applied
+            elif is_bulk:
+                U_0 = Constant(0)
+                dirichlet = bulk
+            bcs.append(DirichletBC(self.W.sub(n_m), U_0, dirichlet))
+
+        return a, bcs
+        
+
     def potential_poisson_form(self, u, test_fn, conc_params, solid=False, W=None, i_bc=None):
         """Returns weak form of the Poisson equation for a potential
         DG: Using interior penalty for potential gradient
@@ -1860,13 +1904,13 @@ class EchemSolver(ABC):
             if (neumann is not None) and (z != 0.0) and eps_r is None and eps_0 is None:
                 a -= z * F * test_fn * \
                     self.neumann(C, conc_params[i], u) * self.ds(neumann)
-            if not solid:
+            if not solid and z!=0:
                 D = conc_params[i]["diffusion coefficient"]
                 if self.flow["porous"]:
                     D = self.effective_diffusion(D)
                 if eps_r is None or eps_0 is None:
                     K_U += z**2 * F**2 * D * C / R / T
-                elif z != 0:
+                elif z != 0.0:
                     a -= F * z * C * test_fn * self.dx()
 
                 # Echem reaction
@@ -1907,6 +1951,7 @@ class EchemSolver(ABC):
                 n_r = self.num_liquid
             if len(reactions) > n_r:
                 if reactions[n_r] != 0.0:
+                    print("Reactions in solid Poisson. for test only")
                     a -= reactions[n_r] * test_fn * self.dx()
 
         is_inlet = (inlet is not None) and solid
