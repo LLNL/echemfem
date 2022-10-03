@@ -19,5 +19,6 @@ the list below as part of your commit.
 * Julian Andrej, LLNL
 * Victor Beck, LLNL
 * Victoria Ehlinger, LLNL
+* Nitish Govindarajan, LLNL
 * Tiras Lin, LLNL
 * Thomas Roy, LLNL
