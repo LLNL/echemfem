@@ -21,7 +21,7 @@ class DiffusionMigrationSolver(EchemSolver):
             D2 = 1.0
             z1 = 2.0
             z2 = -2.0
-            K = 1.0
+            K = 2e-1
             f1 = div((- D1 * z1 * grad(Uex)) * C1ex) - div(D1 * grad(C1ex))
             f2 = div((- D2 * z2 * grad(Uex)) * C2ex) - div(D2 * grad(C2ex))
             #f3 = div(( - D1 * z1**2 * grad(Uex)) * C1ex) + div(( - D2 * z2**2 * grad(Uex)) * C2ex)
@@ -43,8 +43,8 @@ class DiffusionMigrationSolver(EchemSolver):
                            "F": 1.0,
                            "R": 1.0,
                            "T": 1.0,
-                           "vacuum permittivity": 1.0,
-                           "relative permittivity": 1.0,
+                           "vacuum permittivity": 2.0,
+                           "relative permittivity": 1e-1,
                            "U_app": Uex,
                            "bulk reaction": f,
                            }
@@ -55,10 +55,6 @@ class DiffusionMigrationSolver(EchemSolver):
         self.boundary_markers = {"bulk dirichlet": (1, 2, 3, 4,),
                                  "applied": (1, 2, 3, 4,),
                                  }
-
-    def set_velocity(self):
-        self.vel = as_vector((Constant(0.), Constant(0.)))
-
 
 def test_convergence():
     errC1_old = 1e6
@@ -98,3 +94,5 @@ def test_convergence_CG():
         errC1_old = errC1
         errC2_old = errC2
         errU_old = errU
+
+test_convergence_CG()

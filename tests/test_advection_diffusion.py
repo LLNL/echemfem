@@ -30,20 +30,14 @@ class AdvectionDiffusionSolver(EchemSolver):
 
         conc_params.append({"name": "C1",
                             "diffusion coefficient": D,
-                            "z": 0.,
                             "bulk": C1ex,
                             })
 
         conc_params.append({"name": "C2",
                             "diffusion coefficient": D,
-                            "z": 0.,
                             "bulk": C2ex,
                             })
         physical_params = {"flow": ["diffusion", "advection"],
-                           "F": 96485.3329,  # C/mol
-                           "R": 8.3144598,  # J/K/mol
-                           "T": 273.15 + 25.,  # K
-                           "U_app": 0.1,  # V
                            "bulk reaction": f,
                            "v_avg": 1.0,
                            }

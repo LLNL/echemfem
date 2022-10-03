@@ -21,20 +21,14 @@ class DiffusionSolver(EchemSolver):
 
         conc_params.append({"name": "C1",
                             "diffusion coefficient": 1.0,
-                            "z": 0.,
                             "bulk": C1ex,
                             })
 
         conc_params.append({"name": "C2",
                             "diffusion coefficient": 1.0,
-                            "z": 0.,
                             "bulk": C2ex,
                             })
         physical_params = {"flow": ["diffusion"],
-                           "F": 96485.3329,
-                           "R": 8.3144598,
-                           "T": 273.15 + 25.,
-                           "U_app": 0.1,
                            "bulk reaction": f,
                            }
 
@@ -43,10 +37,6 @@ class DiffusionSolver(EchemSolver):
     def set_boundary_markers(self):
         self.boundary_markers = {"bulk dirichlet": (1, 2, 3, 4),
                                  }
-
-    def set_velocity(self):
-        self.vel = as_vector((Constant(0), Constant(0.)))
-
 
 def test_convergence():
     err_old = 1e6

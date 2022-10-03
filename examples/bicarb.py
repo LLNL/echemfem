@@ -121,7 +121,6 @@ class CarbonateSolver(EchemSolver):
 
 
         physical_params = {"flow": ["advection","diffusion"],
-                           "U_app": 0.0, 
                            "bulk reaction": bulk_reaction,
                            }
 

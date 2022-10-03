@@ -57,10 +57,6 @@ class DiffusionMigrationSolver(EchemSolver):
                                  "applied": (1, 2, 3, 4,),
                                  }
 
-    def set_velocity(self):
-        self.vel = as_vector((Constant(0.), Constant(0.)))
-
-
 def test_convergence():
     errC_old = 1e6
     errU_old = 1e6

@@ -110,10 +110,6 @@ class CarbonateSolver(EchemSolver):
                                  "neumann": (2,),
                                  }
 
-    def set_velocity(self):
-        self.vel = as_vector([Constant(0), Constant(0)])  # m/s
-
-
 solver = CarbonateSolver()
 solver.setup_solver()
 solver.solve()
