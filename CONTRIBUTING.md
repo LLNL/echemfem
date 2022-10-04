@@ -1,6 +1,6 @@
-# Contributing to TOPE
+# Contributing to EchemFEM
 
-We welcome contributions to TOPE. To do so please submit a pull request through our
+We welcome contributions to EchemFEM. To do so please submit a pull request through our
 EchemFEM github page at https://github.com/LLNL/echemfem.
 
 All contributions to EchemFEM must be made under the MIT license.
