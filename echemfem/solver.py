@@ -69,6 +69,7 @@ class EchemSolver(ABC):
                      "porous": False,
                      "darcy": False,
                      "advection gas only": False,
+                     "diffusion finite size": False,
                      # adds pressure variable(s), velocity(ies) defined by Darcy's law.
                      # Need a second velocity for gas phase
                      }
@@ -1439,6 +1440,18 @@ class EchemSolver(ABC):
                         denominator -= NA * ai ** 3 * u[i]
                         numerator += NA * ai ** 3 * grad(u[i])
                 a += D * C * inner(numerator / denominator,  grad(test_fn)) * dx()
+
+        if self.flow["diffusion finite size"]:
+            NA = self.physical_params["Avogadro constant"]
+            denominator = 1.0
+            for i in range(n_c):
+                ai = self.conc_params[i].get("solvated diameter")
+                if ai is not None and ai != 0.0:
+                    denominator -= NA * ai ** 3 * u[i]
+            gammai = 1.0 / denominator    
+            a += D * C * inner(grad(ln(gammai * C)), grad(test_fn)) * dx()
+            if bulk_dirichlet is not None:
+                bcs.append(DirichletBC(self.W.sub(i_c), C_0, bulk_dirichlet))
 
 
         if self.flow["advection"]:
