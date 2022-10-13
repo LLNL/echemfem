@@ -69,7 +69,10 @@ class EchemSolver(ABC):
                      "porous": False,
                      "darcy": False,
                      "advection gas only": False,
-                     "diffusion finite size": False,
+                     "diffusion finite size_BK": False,
+                     "diffusion finite size_CS": False,
+                     "diffusion finite size_SP": False,
+                     "diffusion finite size_BMCSL": False
                      # adds pressure variable(s), velocity(ies) defined by Darcy's law.
                      # Need a second velocity for gas phase
                      }
@@ -1156,7 +1159,6 @@ class EchemSolver(ABC):
 
     def effective_diffusion(self, D, phase="liquid"):
         """ Bruggeman correlation for effective diffusion in a porous medium
-
         """
         porosity = self.physical_params["porosity"]
         if phase == "solid":
@@ -1441,15 +1443,62 @@ class EchemSolver(ABC):
                         numerator += NA * ai ** 3 * grad(u[i])
                 a += D * C * inner(numerator / denominator,  grad(test_fn)) * dx()
 
-        if self.flow["diffusion finite size"]:
+        if self.flow["diffusion finite size_BK"]:
             NA = self.physical_params["Avogadro constant"]
-            denominator = 1.0
+            phi = 0.0
             for i in range(n_c):
                 ai = self.conc_params[i].get("solvated diameter")
                 if ai is not None and ai != 0.0:
-                    denominator -= NA * ai ** 3 * u[i]
-            gammai = 1.0 / denominator    
-            a += D * C * inner(grad(ln(gammai * C)), grad(test_fn)) * dx()
+                    phi += NA * ai ** 3 * u[i]
+            mu_ex = -ln(1 - phi)
+            a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * dx()
+            if bulk_dirichlet is not None:
+                bcs.append(DirichletBC(self.W.sub(i_c), C_0, bulk_dirichlet))
+
+        if self.flow["diffusion finite size_CS"]:
+            NA = self.physical_params["Avogadro constant"]
+            phi = 0.0
+            for i in range(n_c):
+                ai = self.conc_params[i].get("solvated diameter")
+                if ai is not None and ai != 0.0:
+                    phi += NA * ai ** 3 * u[i]
+            mu_ex = phi*(8 - 9*phi + 3*phi**2)/(1 - phi)**3
+            a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * dx()
+            if bulk_dirichlet is not None:
+                bcs.append(DirichletBC(self.W.sub(i_c), C_0, bulk_dirichlet))
+
+        if self.flow["diffusion finite size_SP"]:
+            NA = self.physical_params["Avogadro constant"]
+            phi = 0.0
+            for i in range(n_c):
+                ai = self.conc_params[i].get("solvated diameter")
+                if ai is not None and ai != 0.0:
+                    phi += NA * ai ** 3 * u[i]
+            mu_ex = -ln(1 - 8*phi)
+            a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * dx()
+            if bulk_dirichlet is not None:
+                bcs.append(DirichletBC(self.W.sub(i_c), C_0, bulk_dirichlet))
+
+        if self.flow["diffusion finite size_BMCSL"]:
+            NA = self.physical_params["Avogadro constant"]
+            phi = 0.0
+            psi0 = 0.0   
+            psi1 = 0.0   
+            psi2 = 0.0   
+            for i in range(n_c):
+                ai = self.conc_params[i].get("solvated diameter")
+                if ai is not None and ai != 0.0:
+                    phi += NA * ai ** 3 * u[i]
+                    psi0 += (NA * u[i])    
+                    psi1 += (NA * ai ** 1 * u[i])    
+                    psi2 += (NA * ai ** 2 * u[i])    
+            ai = conc_params.get("solvated diameter")
+            mu_ex = -(1 + 2*psi2**3*ai**3/(phi**3) - 3*psi2**2*ai**2/(phi**2))*ln(1 - phi) \
+                    + (3*psi2*ai + 3*psi1*ai**2 + psi0*ai**3)/(1-phi) \
+                    + (3*psi2*ai**2)/(1-phi)**2 * (psi2/phi + psi1*ai) \
+                    - (psi2**3 * ai**3)*(phi**2 - 5*phi + 2)/(phi**2*(1 - phi)**3)
+            print(mu_ex)
+            a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * dx()
             if bulk_dirichlet is not None:
                 bcs.append(DirichletBC(self.W.sub(i_c), C_0, bulk_dirichlet))
 
@@ -1861,6 +1910,7 @@ class EchemSolver(ABC):
         bulk = self.boundary_markers.get("bulk")
         inlet = self.boundary_markers.get("inlet")
         robin = self.boundary_markers.get("robin")
+        poisson_neumann = self.boundary_markers.get("poisson neumann")
 
         family = self.family
         mesh = self.mesh
@@ -2003,7 +2053,9 @@ class EchemSolver(ABC):
             a -= self.physical_params["gap capacitance"] * \
                 (U_0 - U) * test_fn * self.ds(robin)
 
-
+        if poisson_neumann is not None:
+            sigma = self.physical_params["surface charge density"] 
+            a -= sigma * test_fn * self.ds(poisson_neumann)
 
         return a, bcs
 
@@ -2372,5 +2424,10 @@ class EchemSolver(ABC):
 
     def neumann(self, C, conc_params, u):
         """ Custom Neumann Boundary condition
+        """
+        raise NotImplementedError('method needs to be implemented by solver')
+
+    def poisson_neumann(self, u):
+        """ Custom Neumann Boundary condition for Poisson
         """
         raise NotImplementedError('method needs to be implemented by solver')
