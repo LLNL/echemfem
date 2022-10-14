@@ -315,8 +315,6 @@ class EchemSolver(ABC):
                     us[i], test_fn, conc_params[i], u=us)
                 Form += a
                 bcs += bc
-        # add bulk reaction terms to liquid mass conservation equations
-        Form += self.bulk_reactions(us, v)
 
         # mass conservation of gaseous species
         for i in range(self.num_gas):
@@ -1197,17 +1195,6 @@ class EchemSolver(ABC):
         DK = self.knudsen_diffusivity(gas_params)
         return 1 / (1 / Dm + 1 / DK)
 
-
-    def bulk_reactions(self, u, v):
-        a = 0.0
-        bulk_reaction = self.physical_params.get("bulk reaction")
-        if bulk_reaction is not None:
-            reactions = bulk_reaction(u)
-            for i in range(self.num_liquid):
-                if reactions[i] != 0.0:
-                    a -= reactions[i] * v[i] * self.dx()
-        return a
-
     def gas_sources(self, u, v):
         a = 0.0
         source = self.physical_params.get("gas source")
@@ -1375,6 +1362,7 @@ class EchemSolver(ABC):
         inlet = self.boundary_markers.get("inlet")
         outlet = self.boundary_markers.get("outlet")
         bulk = self.boundary_markers.get("bulk")
+        bulk_reaction = self.physical_params.get("bulk reaction")
         bulk_dirichlet = self.boundary_markers.get("bulk dirichlet")
         gas = self.boundary_markers.get("gas")
         if self.flow["porous"]:
@@ -1391,6 +1379,10 @@ class EchemSolver(ABC):
 
         a = 0.0
         bcs = [] # Dirichlet BCs for CG
+        if bulk_reaction is not None:
+            bulk_reaction_term = bulk_reaction(u)[i_c]
+            if bulk_reaction_term != 0:
+                a -= bulk_reaction_term * test_fn * dx()
 
         if self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]:
             U = u[self.num_mass]
