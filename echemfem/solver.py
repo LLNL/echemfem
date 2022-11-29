@@ -1524,7 +1524,7 @@ class EchemSolver(ABC):
 
 
             applied = self.boundary_markers.get("applied")
-            liquid_applied = self.boundary_markers.get("liquid_applied")
+            liquid_applied = self.boundary_markers.get("liquid applied")
             is_applied = applied is not None and not self.flow["porous"]
             is_applied = is_applied or (
                 self.boundary_markers.get("liquid applied") is not None)
@@ -1833,16 +1833,21 @@ class EchemSolver(ABC):
 
         is_bulk = (bulk is not None)
         applied = self.boundary_markers.get("applied")
+        liquid_applied = self.boundary_markers.get("liquid applied")
+        # in porous case, applied is for solid potential
         is_applied = applied is not None and not self.flow["porous"]
-        is_applied = is_applied or (
-            self.boundary_markers.get("liquid applied") is not None)
-        if is_bulk or is_applied:
-            if is_applied:
-                U_0 = self.U_app
-                dirichlet = applied
-            elif is_bulk:
-                U_0 = Constant(0)
-                dirichlet = bulk
+        is_liquid_applied = liquid_applied is not None
+        dirichlets = []
+        if is_bulk:
+            dirichlets.append((bulk, Constant(0)))
+        if is_applied:
+            dirichlets.append((applied, self.U_app))
+        if is_liquid_applied:
+            dirichlets.append((liquid_applied, self.U_app))
+        for diric in dirichlets:
+            dirichlet = diric[0]
+            U_0 = diric[1]
+            
             if family == "DG":
                 a += inner(K_U * (U_0 - U) * n, grad(test_fn)) * self.ds(dirichlet)
                 a -= inner(K_U * grad(U), n * test_fn) * self.ds(dirichlet)
