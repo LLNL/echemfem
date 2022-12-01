@@ -30,18 +30,39 @@ class CellIntegralPC(AssembledPC):
         a, bcs = super().form(pc, test, trial)
         return Form(a.integrals_by_type("cell")), bcs
 
+class Q1PC(PMGPC):
+    """
+    p-multigrid coarsening with Lagrange elements
+    """
+    def coarsen_element(self, ele):
+        k = super().max_degree(ele)
+        if k <= self.coarse_degree:
+            raise ValueError
+        family = {e.family() for e in ele.sub_elements()} or {ele.family()}
+        #if family <= {"Q", "Lagrange"}:
+        if family <= {"Q", "Lagrange"} or True:
+            k = self.coarse_degree
+        e = FiniteElement("Lagrange", cell=ele.cell(), degree=k, variant="fdm")
+        return TensorElement(e, shape=ele.value_shape()) if ele.value_shape() else e
+
+    def coarsen_form(self, form, args):
+        """recover CG formulation from IP-DG by discarding facet terms"""
+        return super(Q1PC, self).coarsen_form(Form(form.integrals_by_type("cell")), args)            
+
 class BortelsSolver(EchemSolver):
     def __init__(self):
         if args.degree == 1:
-            N = 12 #24
+            N = 16
         else:
-            N = 12
+            N = 8
         plane_mesh = UnitSquareMesh(N, N, quadrilateral=True)
         plane_mesh_hierarchy = MeshHierarchy(plane_mesh, args.ref_levels)
         extruded_hierarchy = ExtrudedMeshHierarchy(
             plane_mesh_hierarchy, 1.0, N)
         mesh = extruded_hierarchy[-1]
         x, y, _ = SpatialCoordinate(mesh)
+
+        self.csolver = args.csolver
 
         conc_params = []
 
@@ -129,8 +150,6 @@ class CoarsenPenaltyPMGPC(P1PC):
         k = 1
         replace_dict[solver.penalty_degree] = Constant(k)
         replace_dict[solver.penalty_degreeU] = Constant(k)
-        #replace_dict[p] = Constant(k)
-        #replace_dict[p] = Constant(k)
         return super(CoarsenPenaltyPMGPC, self).coarsen_form(form, replace_dict)
 
 U_is = solver.num_mass
@@ -150,12 +169,8 @@ if args.degree == 1:
            "mg_levels_ksp_type": "richardson",
            "mg_levels": asm,
            "mg_coarse_ksp_type": "preonly",
-           # "mg_coarse_pc_type": "lu",
-           # "mg_coarse_pc_factor_mat_solver_type": "mumps",
            "mg_coarse": {
                    "mat_type": "aij",
-                   # "pc_type": "lu",
-                   # "pc_factor_mat_solver_type": "mumps",
                    "pc_type": "telescope",
                    "pc_telescope_reduction_factor": REDFACTOR,
                    "pc_telescope_subcomm_type": "contiguous",
@@ -165,6 +180,7 @@ if args.degree == 1:
            }
 
 else:
+
     asm = {"pc_type": "python",
            "pc_python_type": "firedrake.AssembledPC",
            "assembled": {
@@ -178,13 +194,11 @@ else:
            }
     pmgasm = {"pc_type": "python",
             "mat_type": "matfree",
-            #"pc_python_type": "firedrake.P1PC",
             "pc_python_type": __name__+".CoarsenPenaltyPMGPC",
                 "pmg_mg_levels_ksp_type": "chebyshev",
-                "pmg_mg_levels_ksp_max_it": 1,
+                "pmg_mg_levels_ksp_max_it": 4,
                 "pmg_mg_levels_ksp_monitor": None,
                 "pmg_mg_levels_ksp_converged_reason": None,
-                #"pmg_mg_levels_pc_type": "none",
                 "pmg_mg_levels_ksp_norm_type": "unpreconditioned",
                 "pmg_mg_levels_": {
                 "pc_type": "python",
@@ -193,29 +207,29 @@ else:
                 "pc_type": "jacobi"
                 }
                 },
-             "pmg_mg_coarse": { **{
-                    "mat_type": "matfree",
+             "pmg_coarse_mat_type": "aij",
+             "pmg_mg_coarse": {
                     "ksp_type": "gmres",
-                    #"ksp_type": "preonly",
-                    "ksp_rtol": 1e-3,
+                    "ksp_rtol": 1e-1,
                     "ksp_monitor": None,
                     "ksp_converged_reason": None,
-                    },
-                    **asm},
+                    "pc_type": "asm",
+                    "pc_asm_overlap": 1,
+                    "sub": {
+                       "pc_type": "ilu",
+                       "pc_factor_levels": 0,
+                       }
+           },
              }
     gmg = {"pc_type": "mg",
            "mg_levels_ksp_type": "richardson",
            "mg_levels": asm,
            "mg_coarse_ksp_type": "preonly",
-           # "mg_coarse_pc_type": "lu",
-           # "mg_coarse_pc_factor_mat_solver_type": "mumps",
            "mg_coarse": {
                "pc_type": "python",
                "pc_python_type": "firedrake.AssembledPC",
                "assembled": {
                    "mat_type": "aij",
-                   # "pc_type": "lu",
-                   # "pc_factor_mat_solver_type": "mumps",
                    "pc_type": "telescope",
                    "pc_telescope_reduction_factor": REDFACTOR,
                    "pc_telescope_subcomm_type": "contiguous",
@@ -227,36 +241,24 @@ else:
 
 if args.degree == 1:
     amg = {"pc_type": "hypre",
-            #"pc_hypre_boomeramg": {
-            #"strong_threshold": 0.7,
-            #"coarsen_type": "HMIS",
-            #"agg_nl": 3,
-            #"interp_type": "ext+i",
-            #"agg_num_paths": 5,
-            #},
-           }
+            "pc_hypre_boomeramg": {
+            "strong_threshold": 0.7,
+            "coarsen_type": "HMIS",
+            "agg_nl": 3,
+            "interp_type": "ext+i",
+            "agg_num_paths": 5,
+            },
+            }
 else:
-    amg = {"pc_type": "python",
-           "pc_python_type": "firedrake.AssembledPC",
-           "assembled": {"pc_type": "hypre",
-                        }
-           }
-#amg = {"pc_type": "python",
-#       "pc_python_type": "firedrake.AssembledPC",
-#       "assembled": {"pc_type": "lu",
-#                    "pc_factor_mat_solver_type": "mumps",
-#                    }
-#       }
+    amg = {"pc_type": "hypre"}
+
 pmg = {"pc_type": "python",
         "mat_type": "matfree",
-        #"pc_python_type": "firedrake.P1PC",
         "pc_python_type": __name__+".CoarsenPenaltyPMGPC",
+        #"pc_python_type": __name__+".Q1PC",
             "pmg_mg_levels_ksp_type": "chebyshev",
-            #"pmg_mg_levels_ksp_type": "richardson",
             "pmg_mg_levels_ksp_max_it": 4,
             "pmg_mg_levels_ksp_monitor": None,
-            "pmg_mg_levels_ksp_converged_reason": None,
-            #"pmg_mg_levels_pc_type": "none",
             "pmg_mg_levels_ksp_norm_type": "unpreconditioned",
             "pmg_mg_levels_": {
             "pc_type": "python",
@@ -265,33 +267,14 @@ pmg = {"pc_type": "python",
             "pc_type": "jacobi"
             }
             },
-            #"pmg_coarse_mat_type": "aij", 
-            #"pmg_mg_coarse": {
-            #    "ksp_type": "cg",
-            #    "ksp_max_it": 30,
-            #    "ksp_rtol": 1e-5,
-            #    "pc_type": "mg",
-            #    "ksp_monitor": None,
-            #    "ksp_converged_reason": None,
-            #},
+            "pmg_coarse_mat_type": "aij",
          "pmg_mg_coarse": { **{
-                "mat_type": "matfree",
-                #"ksp_type": "fgmres",
                 "ksp_type": "cg",
-                "ksp_max_it": 30,
-                "ksp_rtol": 1e-5,
+                "ksp_rtol": 1e-3,
                 "ksp_monitor": None,
                 "ksp_converged_reason": None,
                 },
-         #       #**gmg},
                 **amg},
-        #"pmg_mg_coarse": {"ksp_type": "preonly",
-        #                 "pc_type": "python",
-        #                 "pc_python_type": "firedrake.AssembledPC",
-        #                 "assembled": {"pc_type": "lu",
-        #                            "pc_factor_mat_solver_type": "mumps",
-        #                            }
-        #                 },
         }
 if args.degree == 1:
     mat_type = "aij"
@@ -299,19 +282,16 @@ else:
     mat_type = "matfree"
 custom_potential_solver={
     "mat_type": mat_type,
-    #"snes_view": None,
-    #"snes_monitor": None,
-    #"snes_rtol": 1e-2,
-    "snes_type": "ksponly",
+    "snes_view": None,
+    "snes_monitor": None,
+    "snes_rtol": 1e-6,
     "ksp_monitor": None,
     "ksp_converged_reason": None,
-    #"ksp_type": "fgmres",
     "ksp_type": "cg",
-    "ksp_rtol": 1e-5,
+    "ksp_rtol": 1e-2,
     "log_view": None,
      }
-
-if args.degree > 1:
+if args.degree > 2:
     custom_potential_solver = {** custom_potential_solver,
                                 ** pmg}
     psolver = pmg
@@ -319,20 +299,23 @@ else:
     custom_potential_solver = {** custom_potential_solver,
                                 ** amg}
     psolver = amg
-#custom_potential_solver= {"snes_type": "ksponly",
-#                         "ksp_type": "preonly",
-#                         "pc_type": "python",
-#                         "pc_python_type": "firedrake.AssembledPC",
-#                         "assembled": {"pc_type": "lu",
-#                                    "pc_factor_mat_solver_type": "mumps",
-#                                    }
-#                                         }
 if args.csolver == "asm":
-    csolver = asm
-    if args.degree > 1:
-        csolver = pmgasm
-else:
+    if args.degree > 2:
+        csolver = asm
+    else:
+        csolver = asm
+elif args.csolver == "gmg":
     csolver = gmg
+elif args.csolver == "pmgasm":
+    csolver = pmgasm
+
+
+if args.degree >2:
+    U_field = "1"
+    C0_field = "0"
+else:
+    U_field = "0"
+    C0_field = "1"
 
 solver.init_solver_parameters(
     custom_solver={
@@ -346,42 +329,27 @@ solver.init_solver_parameters(
         "ksp_type": "fgmres",
         "ksp_rtol": 1e-3,
         "pc_type": "fieldsplit",
-        "pc_fieldsplit_1_fields": U_is,
-        "pc_fieldsplit_0_fields": 0,
-        "fieldsplit_1": {**{
+        "pc_fieldsplit_"+U_field+"_fields": U_is,
+        "pc_fieldsplit_"+C0_field+"_fields": 0,
+        "fieldsplit_"+U_field: {**{
             "ksp_converged_reason": None,
-            "ksp_monitor": None,
             "ksp_rtol": 1e-1,
             "ksp_type": "cg",
-            #"ksp_type": "preonly",
         }, **psolver},
-        #"fieldsplit_0": {"ksp_type": "preonly",
-        #                 "pc_type": "python",
-        #                 "pc_python_type": "firedrake.AssembledPC",
-        #                 "assembled": {"pc_type": "lu",
-        #                            "pc_factor_mat_solver_type": "mumps",
-        #                            }
-        #                 },
-        "fieldsplit_0": {**{
+        "fieldsplit_"+C0_field: {**{
             "ksp_converged_reason": None,
             "ksp_rtol": 1e-1,
             "ksp_type": "gmres",
-            }, **csolver}
+        }, **csolver},
     },
     custom_potential_solver=custom_potential_solver)
-#solver.init_solver_parameters(
-    #custom_solver={
-    #    "mat_type": "aij",
-    #    "snes_view": None,
-    #    "snes_converged_reason": None,
-    #    "snes_monitor": None,
-    #    "snes_rtol": 1e-6,
-    #    "ksp_monitor": None,
-    #    "ksp_converged_reason": None,
-    #    "ksp_type": "preonly",
-    #    "pc_type": "lu",
-    #    "pc_factor_mat_solver_type": "mumps"},
-    #custom_potential_solver=custom_potential_solver)
 
+solver.save_solutions = False
 solver.setup_solver(initial_solve=True)
 solver.solve()
+c1, U = solver.u.split()
+errc1 = errornorm(solver.C1ex, c1)
+errU = errornorm(solver.Uex, U)
+err = errc1 + errU
+PETSc.Sys.Print("cells = {} L2err = {:.5E} C1err = {:.5E} Uerr = {:.5E}".format(
+    solver.comm.allreduce(solver.mesh.cell_set.size, op=MPI.SUM), err, errc1, errU))

@@ -1528,7 +1528,7 @@ class EchemSolver(ABC):
             is_applied = applied is not None and not self.flow["porous"]
             is_applied = is_applied or (
                 self.boundary_markers.get("liquid applied") is not None)
-            if False: #is_applied: #TODO: unused for our examples
+            if is_applied: #TODO: unused for our examples
                 if self.flow["porous"]:
                     idx = liquid_applied
                 else:
