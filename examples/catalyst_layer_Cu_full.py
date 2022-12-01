@@ -6,9 +6,9 @@ import numpy as np
 import csv
 """
 Model fromn
-Hawks, S.A., Ehlinger, V.M., Moore, T., Duoss, E.B., Beck, V.A., Weber, A.Z.
-and Baker, S.E., 2022. Analyzing Production Rate and Carbon Utilization
-Trade-offs in CO2RR Electrolyzers. ACS Energy Letters, 7, pp.2685-2693.
+Corral D, Lee DU, Ehlinger VM, Nitopi S, Acosta JE, Wang L, King AJ, Feaster JT, 
+Lin YR, Weber AZ, Baker SE. Bridging knowledge gaps in liquid-and vapor-fed CO2 
+electrolysis through active electrode area. Chem Catalysis. 2022 Oct 12.
 """
 # operating conditions
 T = 293.15             # temperature (K)
