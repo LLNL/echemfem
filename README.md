@@ -1,4 +1,6 @@
-## EchemFEM
+# EchemFEM
+
+[![DOI](https://zenodo.org/badge/513600791.svg)](https://zenodo.org/badge/latestdoi/513600791)
 
 This code provides Finite Element solvers for electrochemical transport.
 Both continuous Galerkin (CG) and discontinuous Galerkin (DG) schemes are provided. The DG scheme for electroneutral Nernst-Planck is described in [Roy et al., 2021](https://arxiv.org/abs/2112.09271). The CG scheme using SUPG for the advection-migration term.
