@@ -58,6 +58,10 @@ class EchemSolver(ABC):
 
         self.mesh = mesh
         self.set_boundary_markers()
+        for mrk in self.boundary_markers:
+            if isinstance(self.boundary_markers[mrk], int):
+                PETSc.Sys.Print("*** WARNING: boundary marker converted from int to tuple")
+                self.boundary_markers[mrk] = (self.boundary_markers[mrk],)
 
         self.flow = {"advection": False,
                      "diffusion": False,
@@ -1528,24 +1532,31 @@ class EchemSolver(ABC):
             is_applied = applied is not None and not self.flow["porous"]
             is_applied = is_applied or (
                 self.boundary_markers.get("liquid applied") is not None)
-            if is_applied: #TODO: unused for our examples
+            idx_app = None
+            if is_applied:
                 if self.flow["porous"]:
-                    idx = liquid_applied
+                    idx_app = liquid_applied
                 else:
-                    idx = applied
+                    idx_app = applied
+            if idx_app is not None:
                 a += conditional(dot(flow, n) < 0, test_fn *
-                                 dot(flow, n) * C_0, 0.0) * self.ds(idx)
+                                 dot(flow, n) * C_0, 0.0) * self.ds(idx_app)
                 a += conditional(dot(flow, n) > 0, test_fn *
-                                 dot(flow, n) * C, 0.0) * self.ds(idx)
-            else:
-                # Gamma Inlet
-                if inlet is not None:
-                    a += conditional(dot(vel, n) < 0, test_fn *
-                                     dot(vel, n) * C_0, 0.0) * self.ds(inlet)
-                # Gamma Outlet
-                if outlet is not None:
-                    a += conditional(dot(vel, n) > 0, test_fn *
-                                     dot(vel, n) * C, 0.0) * self.ds(outlet)
+                                 dot(flow, n) * C, 0.0) * self.ds(idx_app)
+            # Gamma Inlet
+            if inlet is not None:
+                idx = inlet
+                if idx_app is not None:
+                    idx = tuple(set(idx) - set(idx_app))
+                a += conditional(dot(vel, n) < 0, test_fn *
+                                 dot(vel, n) * C_0, 0.0) * self.ds(idx)
+            # Gamma Outlet
+            if outlet is not None:
+                idx = outlet
+                if idx_app is not None:
+                    idx = tuple(set(idx) - set(idx_app))
+                a += conditional(dot(vel, n) > 0, test_fn *
+                                 dot(vel, n) * C, 0.0) * self.ds(idx)
 
         # Gamma Bulk
         if bulk is not None and conc_params.get(
