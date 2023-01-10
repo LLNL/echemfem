@@ -42,7 +42,8 @@ class EchemSolver(ABC):
             overwrite_stats_file=False,
             p=1,
             family="DG",
-            p_penalty=None):
+            p_penalty=None,
+            SUPG = False):
 
         self.physical_params = physical_params
         self.conc_params = conc_params
@@ -81,7 +82,8 @@ class EchemSolver(ABC):
                      # Need a second velocity for gas phase
                      }
 
-        self.save_solutions = True
+        self.SUPG = SUPG
+        self.save_solutions = True # hidden option
 
         for physics in physical_params["flow"]:
             self.flow[physics] = True
@@ -1516,12 +1518,14 @@ class EchemSolver(ABC):
                 flow_N = 0.5 * (dot(flow, n) + abs(dot(flow, n)))
                 a += (test_fn('+') - test_fn('-')) * \
                     (flow_N('+') * C('+') - flow_N('-') * C('-')) * self.dS()
-            elif False: # SUPG
-                hk = CellDiameter(mesh)
+            elif self.SUPG: # SUPG
+                #hk = CellDiameter(mesh)
+                hk = sqrt(2) * CellVolume(mesh) / CellDiameter(mesh)
                 u_norm = inner(flow, flow) ** 0.5
                 Pe = hk / 2. * u_norm / D
                 #Pe_f = conditional(gt(Pe, 3), 1., Pe/3.) # Wang?
                 Pe_f = conditional(gt(Pe, 1), 1. - 1./Pe, 0) # ElmanSilvesterWathen
+                #Pe_f = conditional(gt(Pe, 1), 1., Pe/3) # BrezziMariniRusso
                 delta_k = hk / 2. / u_norm * Pe_f
                 # p = 1
                 a += delta_k * inner(dot(flow, grad(C)), dot(flow, grad(test_fn))) * dx()
@@ -1676,7 +1680,7 @@ class EchemSolver(ABC):
                 flow_N = 0.5 * (dot(flow, n) + abs(dot(flow, n)))
                 a += (test_fn('+') - test_fn('-')) * \
                     (flow_N('+') * X('+') - flow_N('-') * X('-')) * dS
-            elif True: # SUPG
+            elif self.SUPG: # SUPG
                 hk = CellDiameter(mesh)
                 u_norm = inner(flow, flow) ** 0.5
                 Pe = hk / 2. * u_norm / D
