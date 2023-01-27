@@ -155,7 +155,7 @@ class EchemSolver(ABC):
             return dx(
                 subdomain_id=subdomain_id,
                 domain=domain,
-                rule=quadrature_rule)
+                scheme=quadrature_rule)
 
         if mesh.layers:
             # This doesn't include top and bottom surfaces
@@ -163,26 +163,26 @@ class EchemSolver(ABC):
                 return ds_v(
                     subdomain_id=subdomain_id,
                     domain=domain,
-                    rule=quadrature_rule_face)
+                    scheme=quadrature_rule_face)
 
             def _internal_dS(subdomain_id=None, domain=None):
                 return dS_v(subdomain_id=subdomain_id,
                             domain=domain,
-                            rule=quadrature_rule_face) + dS_h(subdomain_id=subdomain_id,
+                            scheme=quadrature_rule_face) + dS_h(subdomain_id=subdomain_id,
                                                               domain=domain,
-                                                              rule=quadrature_rule_face)
+                                                              scheme=quadrature_rule_face)
         else:
             def _internal_ds(subdomain_id=None, domain=None):
                 return ds(
                     subdomain_id=subdomain_id,
                     domain=domain,
-                    rule=quadrature_rule_face)
+                    scheme=quadrature_rule_face)
 
             def _internal_dS(subdomain_id=None, domain=None):
                 return dS(
                     subdomain_id=subdomain_id,
                     domain=domain,
-                    rule=quadrature_rule_face)
+                    scheme=quadrature_rule_face)
 
         self.ds = _internal_ds
         self.dx = _internal_dx
