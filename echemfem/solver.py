@@ -77,6 +77,7 @@ class EchemSolver(ABC):
                      "diffusion finite size_BK": False,
                      "diffusion finite size_CS": False,
                      "diffusion finite size_SP": False,
+                     "diffusion finite size_SMPNP": False,
                      "diffusion finite size_BMCSL": False
                      # adds pressure variable(s), velocity(ies) defined by Darcy's law.
                      # Need a second velocity for gas phase
@@ -1474,6 +1475,25 @@ class EchemSolver(ABC):
                     phi += NA * ai ** 3 * u[i]
             mu_ex = -ln(1 - 8*phi)
             a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * dx()
+            if bulk_dirichlet is not None:
+                bcs.append(DirichletBC(self.W.sub(i_c), C_0, bulk_dirichlet))
+
+        if self.flow["diffusion finite size_SMPNP"]:
+            NA = self.physical_params["Avogadro constant"]
+            phi = 0.0
+            a0 = 2.3e-10    # Size of water molecule
+            for i in range(n_c):
+                ai = self.conc_params[i].get("solvated diameter")
+                if ai is not None and ai != 0.0:
+                    betai = (ai/a0)**3
+                    phi += betai * NA * ai ** 3 * u[i]
+
+            # size-modified (SMPNP) correction (cf. Eq. 4 in doi:10.26434/chemrxiv-2022-h2mrp)
+
+            mu_ex = -ln(1 - phi)
+
+            a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * dx()
+
             if bulk_dirichlet is not None:
                 bcs.append(DirichletBC(self.W.sub(i_c), C_0, bulk_dirichlet))
 
