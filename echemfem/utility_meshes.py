@@ -174,5 +174,5 @@ def RectangleBoundaryLayerMesh(nx, ny, Lx, Ly, n_bdlayer, L_bdlayer, Ly_bdlayer=
             if abs(face_coords[1] - Ly) < ytol and abs(face_coords[3] - Ly) < ytol:
                 plex.setLabelValue(dmcommon.FACE_SETS_LABEL, face, 4)
 
-    return mesh.Mesh(plex, reorder=reorder, distribution_parameters=distribution_parameters)
+    return mesh.Mesh(plex, reorder=reorder, distribution_parameters=distribution_parameters, comm=comm)
 

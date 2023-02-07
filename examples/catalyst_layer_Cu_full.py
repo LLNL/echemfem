@@ -1,6 +1,6 @@
+from firedrake import *
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
-from firedrake import *
 from echemfem import EchemSolver
 import numpy as np
 import csv
