@@ -77,6 +77,7 @@ class EchemSolver(ABC):
                      "diffusion finite size_BK": False,
                      "diffusion finite size_CS": False,
                      "diffusion finite size_SP": False,
+                     "diffusion finite size_SMPNP": False,
                      "diffusion finite size_BMCSL": False
                      # adds pressure variable(s), velocity(ies) defined by Darcy's law.
                      # Need a second velocity for gas phase
@@ -1477,26 +1478,50 @@ class EchemSolver(ABC):
             if bulk_dirichlet is not None:
                 bcs.append(DirichletBC(self.W.sub(i_c), C_0, bulk_dirichlet))
 
-        if self.flow["diffusion finite size_BMCSL"]:
+        if self.flow["diffusion finite size_SMPNP"]:
             NA = self.physical_params["Avogadro constant"]
             phi = 0.0
-            psi0 = 0.0   
-            psi1 = 0.0   
-            psi2 = 0.0   
+            a0 = 2.3e-10    # Size of water molecule
             for i in range(n_c):
                 ai = self.conc_params[i].get("solvated diameter")
                 if ai is not None and ai != 0.0:
-                    phi += NA * ai ** 3 * u[i]
-                    psi0 += (NA * u[i])    
-                    psi1 += (NA * ai ** 1 * u[i])    
-                    psi2 += (NA * ai ** 2 * u[i])    
-            ai = conc_params.get("solvated diameter")
-            mu_ex = -(1 + 2*psi2**3*ai**3/(phi**3) - 3*psi2**2*ai**2/(phi**2))*ln(1 - phi) \
-                    + (3*psi2*ai + 3*psi1*ai**2 + psi0*ai**3)/(1-phi) \
-                    + (3*psi2*ai**2)/(1-phi)**2 * (psi2/phi + psi1*ai) \
-                    - (psi2**3 * ai**3)*(phi**2 - 5*phi + 2)/(phi**2*(1 - phi)**3)
-            print(mu_ex)
+                    betai = (ai/a0)**3
+                    phi += betai * NA * ai ** 3 * u[i]
+
+            # size-modified (SMPNP) correction (cf. Eq. 4 in doi:10.26434/chemrxiv-2022-h2mrp)
+
+            mu_ex = -ln(1 - phi)
+
             a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * dx()
+
+            if bulk_dirichlet is not None:
+                bcs.append(DirichletBC(self.W.sub(i_c), C_0, bulk_dirichlet))
+
+        if self.flow["diffusion finite size_BMCSL"]:
+            NA = self.physical_params["Avogadro constant"]
+            psi3 = 0.0
+            psi0 = 0.0
+            psi1 = 0.0
+            psi2 = 0.0
+            for i in range(n_c):
+                ai = self.conc_params[i].get("solvated diameter")
+                if ai is not None and ai != 0.0:
+                    psi0 += (pi/6)*(NA * u[i])
+                    psi1 += (pi/6)*(NA * ai ** 1 * u[i])
+                    psi2 += (pi/6)*(NA * ai ** 2 * u[i])
+                    psi3 += (pi/6)*(NA * ai ** 3 * u[i])
+            ai = conc_params.get("solvated diameter")
+
+            # Boublik-Mansoori-Carnahan-Sterling-Leland (BMCSL) correction (cf Eq. 4 in doi:10.1016/j.jcis.2007.08.006)
+
+            mu_ex = -(1 + (2*psi2**3*ai**3/(psi3**3)) - (3*psi2**2*ai**2/(psi3**2)))*ln(1 - psi3) \
+                    + (3*psi2*ai + 3*psi1*ai**2 + psi0*ai**3)/(1 - psi3) \
+                    + (6*psi1*psi2*ai**3 + 9*psi2**2*ai**2)/(2*(1-psi3)**2) \
+                    + (3*psi2**3*ai**3)/(1 - psi3)**3 + ((3*psi2**2*ai**2)/(psi3))*((1-3*psi3*0.5)/(1-psi3)**2)  \
+                    - (psi2**3 * ai**3)*(4*psi3**2 - 5*psi3 + 2)/(psi3**2*(1 - psi3)**3)
+
+            a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * dx()
+
             if bulk_dirichlet is not None:
                 bcs.append(DirichletBC(self.W.sub(i_c), C_0, bulk_dirichlet))
 
