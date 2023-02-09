@@ -48,9 +48,9 @@ class AdvectionDiffusionMigrationSolver(EchemSolver):
         DX2 = 1 / (1 / D2M + 1 / D2K)
 
         def f(C):
-            f1 = div((vel - D1 * z1 * grad(U1ex)) * C1ex) - \
+            f1 = div((vel - self.effective_diffusion(D1) * z1 * grad(U1ex)) * C1ex) - \
                 div(self.effective_diffusion(D1) * grad(C1ex))
-            f2 = div((vel - D2 * z2 * grad(U1ex)) * C2ex) - \
+            f2 = div((vel - self.effective_diffusion(D2) * z2 * grad(U1ex)) * C2ex) - \
                 div(self.effective_diffusion(D2) * grad(C2ex))
             f3 = div(- self.effective_diffusion(K, phase="solid") * grad(U2ex))
             return [f1, f2, f3]
@@ -178,7 +178,7 @@ def test_convergence_low_peclet():
         solver = AdvectionDiffusionMigrationSolver(2**(i + 1), 1.0)
         solver.setup_solver()
         solver.solve()
-        c1, X1, U1, U2, p, pg = solver.u.split()
+        c1, X1, U1, U2, p, pg = solver.u.subfunctions
         err = errornorm(solver.C1ex,
                         c1) + errornorm(solver.U1ex,
                                         U1) + errornorm(solver.U2ex,
@@ -200,7 +200,7 @@ def test_convergence_high_peclet():
         solver = AdvectionDiffusionMigrationSolver(2**(i + 1), 1e2)
         solver.setup_solver()
         solver.solve()
-        c1, X1, U1, U2, p, pg = solver.u.split()
+        c1, X1, U1, U2, p, pg = solver.u.subfunctions
         err = errornorm(solver.C1ex,
                         c1) + errornorm(solver.U1ex,
                                         U1) + errornorm(solver.U2ex,

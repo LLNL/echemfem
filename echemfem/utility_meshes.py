@@ -56,7 +56,7 @@ def IntervalBoundaryLayerMesh(ncells, length_or_left, ncells_bdlayer, length_bdl
     coords = coords.reshape(-1, 1)
     cells = np.dstack((np.arange(0, len(coords) - 1, dtype=np.int32),
                        np.arange(1, len(coords), dtype=np.int32))).reshape(-1, 2)
-    plex = mesh._from_cell_list(1, cells, coords, comm)
+    plex = mesh.plex_from_cell_list(1, cells, coords, comm)
     # Apply boundary IDs
     plex.createLabel(dmcommon.FACE_SETS_LABEL)
     coordinates = plex.getCoordinates()
@@ -152,7 +152,7 @@ def RectangleBoundaryLayerMesh(nx, ny, Lx, Ly, n_bdlayer, L_bdlayer, Ly_bdlayer=
     i, j = np.meshgrid(np.arange(nx, dtype=np.int32), np.arange(ny, dtype=np.int32))
     cells = [i*(ny+1) + j, i*(ny+1) + j+1, (i+1)*(ny+1) + j+1, (i+1)*(ny+1) + j]
     cells = np.asarray(cells).swapaxes(0, 2).reshape(-1, 4)
-    plex = mesh._from_cell_list(2, cells, coords, comm)
+    plex = mesh.plex_from_cell_list(2, cells, coords, comm)
 
     # mark boundary facets
     plex.createLabel(dmcommon.FACE_SETS_LABEL)

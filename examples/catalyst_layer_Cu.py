@@ -232,7 +232,7 @@ for Vs in Vlist:
     solver.U_app.assign(Vs)
     print("V = %d mV" % (Vs * 1000))
     solver.solve()
-    cCO2, cOH, cH, cCO3, cHCO3, phi2, phi1 = solver.u.split()
+    cCO2, cOH, cH, cCO3, cHCO3, phi2, phi1 = solver.u.subfunctions
     cK = Function(solver.V).assign(2 * cCO3 + cOH + cHCO3 - cH)
 
     x_ = Function(V).interpolate(solver.mesh.coordinates[0]).vector().dat.data

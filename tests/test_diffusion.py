@@ -44,7 +44,7 @@ def test_convergence():
         solver = DiffusionSolver(2**(i + 1))
         solver.setup_solver()
         solver.solve()
-        c1, c2 = solver.u.split()
+        c1, c2 = solver.u.subfunctions
         err = errornorm(solver.C1ex, c1) + errornorm(solver.C2ex, c2)
         assert err < 0.29 * err_old
         err_old = err
@@ -55,7 +55,7 @@ def test_convergence_CG():
         solver = DiffusionSolver(2**(i + 1), family="CG")
         solver.setup_solver()
         solver.solve()
-        c1, c2 = solver.u.split()
+        c1, c2 = solver.u.subfunctions
         err = errornorm(solver.C1ex, c1) + errornorm(solver.C2ex, c2)
         assert err < 0.26 * err_old
         err_old = err

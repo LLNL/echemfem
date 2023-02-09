@@ -2,9 +2,6 @@ import pytest
 from firedrake import *
 from echemfem import EchemSolver
 
-PETSc.Sys.popErrorHandler()
-
-
 class AdvectionDiffusionSolver(EchemSolver):
     def __init__(self, N, D, extruded=False, family="DG"):
         if extruded:
@@ -77,7 +74,7 @@ def test_convergence_low_peclet(extruded=False):
         solver = AdvectionDiffusionSolver(2**(i + 1), 1., extruded=extruded)
         solver.setup_solver()
         solver.solve()
-        c1, c2 = solver.u.split()
+        c1, c2 = solver.u.subfunctions
         err = errornorm(solver.C1ex, c1) + errornorm(solver.C2ex, c2)
         assert err < 0.29 * err_old
         err_old = err
@@ -92,7 +89,7 @@ def test_convergence_high_peclet(extruded=False):
         solver = AdvectionDiffusionSolver(2**(i + 1), 1e-3, extruded=extruded)
         solver.setup_solver()
         solver.solve()
-        c1, c2 = solver.u.split()
+        c1, c2 = solver.u.subfunctions
         err = errornorm(solver.C1ex, c1) + errornorm(solver.C2ex, c2)
         assert err < 0.29 * err_old
         err_old = err
@@ -107,7 +104,7 @@ def test_convergence_low_peclet_CG(extruded=False):
         solver = AdvectionDiffusionSolver(2**(i + 1), 1., extruded=extruded, family="CG")
         solver.setup_solver()
         solver.solve()
-        c1, c2 = solver.u.split()
+        c1, c2 = solver.u.subfunctions
         err = errornorm(solver.C1ex, c1) + errornorm(solver.C2ex, c2)
         assert err < 0.29 * err_old
         err_old = err
@@ -122,7 +119,7 @@ def test_convergence_high_peclet_CG(extruded=False):
         solver = AdvectionDiffusionSolver(2**(i + 2), 1./20., extruded=extruded, family="CG")
         solver.setup_solver()
         solver.solve()
-        c1, c2 = solver.u.split()
+        c1, c2 = solver.u.subfunctions
         err = errornorm(solver.C1ex, c1) + errornorm(solver.C2ex, c2)
         assert err < 0.62 * err_old #CG not enough here
         err_old = err

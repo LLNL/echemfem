@@ -523,7 +523,7 @@ class EchemSolver(ABC):
                         bcs=bcs,
                         solver_parameters=self.potential_solver_parameters,
                         options_prefix="echem_potential_initial_guess_")
-                    Ul, Us = U0.split()
+                    Ul, Us = U0.subfunctions
                     File("results/liquid_potential0.pvd").write(Function(self.Vu,
                                                                          name="Liquid Potential").assign(Ul))
                     File("results/solid_potential0.pvd").write(Function(self.Vu,
@@ -588,7 +588,7 @@ class EchemSolver(ABC):
                         p0,
                         bcs=bcs,
                         solver_parameters=pressure_solver_parameters)
-                    pl, pg = p0.split()
+                    pl, pg = p0.subfunctions
                     File("results/liquid_pressure0.pvd").write(Function(self.Vp,
                                                                         name="Liquid Pressure").assign(pl))
                     File("results/gas_pressure0.pvd").write(Function(self.Vp,
@@ -690,13 +690,13 @@ class EchemSolver(ABC):
         if self.vector:
             uviz = u
         elif self.vector_mix:
-            uvi = u.split()
+            uvi = u.subfunctions
             uviz = ()
             for i in range(self.num_mass):
                 uviz += (uvi[0][i],)
             uviz += uvi[1:]
         else:
-            uviz = u.split()
+            uviz = u.subfunctions
 
         r = File(prefix + "collection.pvd")
         collection = []
@@ -739,13 +739,13 @@ class EchemSolver(ABC):
         if self.vector:
             uviz = u
         elif self.vector_mix:
-            uvi = u.split()
+            uvi = u.subfunctions
             uviz = ()
             for i in range(self.num_mass):
                 uviz += (uvi[0][i],)
             uviz += uvi[1:]
         else:
-            uviz = u.split()
+            uviz = u.subfunctions
 
         # Visualize velocity for convenience
         vel_vizfs = VectorFunctionSpace(self.mesh, family, 1)
@@ -2167,7 +2167,7 @@ class EchemSolver(ABC):
             if i_bc is None:
                 bcs.append(DirichletBC(self.W.sub(self.i_pl), p_0, dirichlet))
             else:
-                bcs.append(DirichletBC(W.sub(i_bc), U_0, dirichlet)) # for initial guess
+                bcs.append(DirichletBC(W.sub(i_bc), p_0, dirichlet)) # for initial guess
 
         for i in range(n_c):
             z = conc_params[i]["z"]
@@ -2326,6 +2326,7 @@ class EchemSolver(ABC):
             #else:
             if i_bc is None:
                 bcs.append(DirichletBC(self.W.sub(self.i_pg), p_0, gas_inlet))
+            else:
                 bcs.append(DirichletBC(W.sub(i_bc), p_0, gas_inlet))
 
         # Echem reaction

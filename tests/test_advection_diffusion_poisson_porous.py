@@ -28,8 +28,8 @@ class AdvectionDiffusionPoissonSolver(EchemSolver):
                 div(self.effective_diffusion(D1) * grad(C1ex))
             f2 = div((self.vel) * C2ex) - \
                 div(self.effective_diffusion(D2) * grad(C2ex))
-            f3 = div((- D1 * z1**2 * grad(Uex)) * C1ex) + \
-                div((- D2 * z2**2 * grad(Uex)) * C2ex)
+            f3 = div((- self.effective_diffusion(D1) * z1**2 * grad(Uex)) * C1ex) + \
+                div((- self.effective_diffusion(D2) * z2**2 * grad(Uex)) * C2ex)
             f4 = div(- self.effective_diffusion(K, phase="solid") * grad(U2ex))
             return [f1, f2, f3, f4]
 
@@ -83,8 +83,9 @@ def test_convergence():
         solver = AdvectionDiffusionPoissonSolver(2**(i + 1))
         solver.setup_solver()
         solver.solve()
-        c1, c2, U1, U2 = solver.u.split()
+        c1, c2, U1, U2 = solver.u.subfunctions
         err = errornorm(solver.C1ex, c1) + errornorm(solver.C2ex, c2)\
             + errornorm(solver.Uex, U1) + errornorm(solver.U2ex, U2)
         assert err < 0.29 * err_old
         err_old = err
+

@@ -153,6 +153,6 @@ solver.setup_solver()
 solver.solve()
 
 n = FacetNormal(solver.mesh)
-cCO2, _, _, _, _ = solver.u.split()
+cCO2, _, _, _, _ = solver.u.subfunctions
 flux = assemble(dot(grad(cCO2), n) * ds(3))
 print("flux = %f" % flux)

@@ -69,6 +69,6 @@ solver.setup_solver()
 solver.solve()
 
 n = FacetNormal(solver.mesh)
-cC1, _, = solver.u.split()
+cC1, _, = solver.u.subfunctions
 flux = assemble(dot(grad(cC1), n) * ds(3))
 print("Sh = %f" % flux)

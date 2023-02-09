@@ -70,7 +70,7 @@ def test_convergence_low_peclet():
         solver = AdvectionDiffusionMigrationSolver(2**(i + 1), 1.0)
         solver.setup_solver()
         solver.solve()
-        c1, U = solver.u.split()
+        c1, U = solver.u.subfunctions
         errC = errornorm(solver.C1ex, c1)
         errU = errornorm(solver.Uex, U)
         assert errC < 0.26 * errC_old
@@ -86,7 +86,7 @@ def test_convergence_high_peclet():
         solver = AdvectionDiffusionMigrationSolver(2**(i + 1), 1e5)
         solver.setup_solver()
         solver.solve()
-        c1, U = solver.u.split()
+        c1, U = solver.u.subfunctions
         errC = errornorm(solver.C1ex, c1)
         errU = errornorm(solver.Uex, U)
         assert errC < 0.36 * errC_old # p+1/2 convergence
@@ -101,7 +101,7 @@ def test_convergence_low_peclet_CG():
         solver = AdvectionDiffusionMigrationSolver(2**(i + 1), 1.0, family="CG")
         solver.setup_solver()
         solver.solve()
-        c1, U = solver.u.split()
+        c1, U = solver.u.subfunctions
         errC = errornorm(solver.C1ex, c1)
         errU = errornorm(solver.Uex, U)
         assert errC < 0.26 * errC_old
@@ -117,7 +117,7 @@ def test_convergence_high_peclet_CG():
         solver = AdvectionDiffusionMigrationSolver(2**(i + 2), 1e5, family="CG")
         solver.setup_solver()
         solver.solve()
-        c1, U = solver.u.split()
+        c1, U = solver.u.subfunctions
         errC = errornorm(solver.C1ex, c1)
         errU = errornorm(solver.Uex, U)
         assert errC < 0.66 * errC_old
