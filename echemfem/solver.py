@@ -238,7 +238,7 @@ class EchemSolver(ABC):
             self.W = MixedFunctionSpace(spaces)
 
         # setup solution and test functions
-        u = Function(self.W)
+        u = Function(self.W, name="solution")
         v = TestFunctions(self.W)
         us = split(u)
         if self.vector_mix:
