@@ -238,7 +238,7 @@ class EchemSolver(ABC):
             self.W = MixedFunctionSpace(spaces)
 
         # setup solution and test functions
-        u = Function(self.W)
+        u = Function(self.W, name="solution")
         v = TestFunctions(self.W)
         us = split(u)
         if self.vector_mix:
@@ -320,7 +320,10 @@ class EchemSolver(ABC):
                 conc_params[i]["i_c"] = i
                 a, bc = self.mass_conservation_form(
                     us[i], test_fn, conc_params[i], u=us)
-                Form += a
+                weight = conc_params[i].get("residual weight")
+                if weight is None:
+                    weight = 1.0
+                Form += weight * a
                 bcs += bc
 
         # mass conservation of gaseous species
@@ -1554,6 +1557,9 @@ class EchemSolver(ABC):
                 delta_k = hk / 2. / u_norm * Pe_f
                 # p = 1
                 a += delta_k * inner(dot(flow, grad(C)), dot(flow, grad(test_fn))) * dx()
+                if bulk_reaction is not None:
+                    if bulk_reaction_term != 0:
+                        a -= bulk_reaction_term * delta_k * dot(flow, grad(test_fn)) * dx()
 
 
             applied = self.boundary_markers.get("applied")

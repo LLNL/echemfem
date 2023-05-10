@@ -162,16 +162,34 @@ def RectangleBoundaryLayerMesh(nx, ny, Lx, Ly, n_bdlayer, L_bdlayer, Ly_bdlayer=
     if plex.getStratumSize("boundary_faces", 1) > 0:
         boundary_faces = plex.getStratumIS("boundary_faces", 1).getIndices()
         xtol = Lx/(2*nx)
+        xtol_bdlayer = Lx_bdlayer/(2*nx_bdlayer)
         ytol = Ly/(2*ny)
+        ytol_bdlayer = Ly_bdlayer/(2*ny_bdlayer)
+        if 1 in boundary:
+            xtol1 = xtol_bdlayer
+        else:
+            xtol1 = xtol
+        if 2 in boundary:
+            xtol2 = xtol_bdlayer
+        else:
+            xtol2 = xtol
+        if 3 in boundary:
+            ytol3 = ytol_bdlayer
+        else:
+            ytol3 = ytol
+        if 4 in boundary:
+            ytol4 = ytol_bdlayer
+        else:
+            ytol4 = ytol
         for face in boundary_faces:
             face_coords = plex.vecGetClosure(coord_sec, coords, face)
-            if abs(face_coords[0]) < xtol and abs(face_coords[2]) < xtol:
+            if abs(face_coords[0]) < xtol1 and abs(face_coords[2]) < xtol1:
                 plex.setLabelValue(dmcommon.FACE_SETS_LABEL, face, 1)
-            if abs(face_coords[0] - Lx) < xtol and abs(face_coords[2] - Lx) < xtol:
+            if abs(face_coords[0] - Lx) < xtol2 and abs(face_coords[2] - Lx) < xtol2:
                 plex.setLabelValue(dmcommon.FACE_SETS_LABEL, face, 2)
-            if abs(face_coords[1]) < ytol and abs(face_coords[3]) < ytol:
+            if abs(face_coords[1]) < ytol3 and abs(face_coords[3]) < ytol3:
                 plex.setLabelValue(dmcommon.FACE_SETS_LABEL, face, 3)
-            if abs(face_coords[1] - Ly) < ytol and abs(face_coords[3] - Ly) < ytol:
+            if abs(face_coords[1] - Ly) < ytol4 and abs(face_coords[3] - Ly) < ytol4:
                 plex.setLabelValue(dmcommon.FACE_SETS_LABEL, face, 4)
 
     return mesh.Mesh(plex, reorder=reorder, distribution_parameters=distribution_parameters, comm=comm)
