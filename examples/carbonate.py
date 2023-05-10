@@ -113,7 +113,7 @@ class CarbonateSolver(EchemSolver):
 solver = CarbonateSolver()
 solver.setup_solver()
 solver.solve()
-C_CO2, C_OH, C_H, C_CO3, C_HCO3 = solver.u.split()
+C_CO2, C_OH, C_H, C_CO3, C_HCO3 = solver.u.subfunctions
 # OH boundary layer
 x = solver.mesh.coordinates
 C_OH_bl = Function(solver.V).assign(C_OH).dat.data[100:]

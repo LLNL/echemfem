@@ -64,7 +64,7 @@ def test_convergence():
         solver = DiffusionMigrationSolver(2**(i + 1))
         solver.setup_solver()
         solver.solve()
-        c1, U = solver.u.split()
+        c1, U = solver.u.subfunctions
         errC = errornorm(solver.C1ex, c1)
         errU = errornorm(solver.Uex, U)
         assert errC < 0.26 * errC_old
@@ -79,7 +79,7 @@ def test_convergence_CG():
         solver = DiffusionMigrationSolver(2**(i + 1), family="CG")
         solver.setup_solver()
         solver.solve()
-        c1, U = solver.u.split()
+        c1, U = solver.u.subfunctions
         errC = errornorm(solver.C1ex, c1)
         errU = errornorm(solver.Uex, U)
         assert errC < 0.26 * errC_old

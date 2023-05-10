@@ -117,7 +117,7 @@ for sigma in sigmas:
 
 	solver.solve()
 
-	C_Cl, C_Li , C_Cs, Phi = solver.u.split()
+	C_Cl, C_Li , C_Cs, Phi = solver.u.subfunctions
 
 	if(sigma in store_sigmas):
 		

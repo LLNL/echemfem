@@ -2,10 +2,6 @@ import pytest
 from firedrake import *
 from echemfem import EchemSolver
 
-PETSc.Sys.popErrorHandler()
-
-set_log_level(DEBUG)
-
 
 class DiffusionMigrationSolver(EchemSolver):
     def __init__(self, N, extruded=False, gmg=False):
@@ -109,7 +105,7 @@ def test_convergence(extruded=False, gmg=False):
         solver = DiffusionMigrationSolver(2**(i + 1), extruded, gmg)
         solver.setup_solver()
         solver.solve()
-        c1, c2, U = solver.u.split()
+        c1, c2, U = solver.u.subfunctions
         err = errornorm(solver.C1ex, c1) + errornorm(solver.C2ex, c2)\
             + errornorm(solver.Uex, U)
         assert err < 0.29 * err_old

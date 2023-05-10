@@ -1,6 +1,6 @@
-from firedrake import *
-import matplotlib.gridspec as gridspec
+#import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
+from firedrake import *
 from echemfem import EchemSolver
 import numpy as np
 import csv
@@ -234,7 +234,7 @@ for Vs in Vlist:
     solver.U_app.assign(Vs)
     print("V = %d mV" % (Vs * 1000))
     solver.solve()
-    cCO2, cOH, cH, cCO3, cHCO3, cK, phi2, phi1 = solver.u.split()
+    cCO2, cOH, cH, cCO3, cHCO3, cK, phi2, phi1 = solver.u.subfunctions
 
     x_ = Function(V).interpolate(solver.mesh.coordinates[0]).vector().dat.data
 

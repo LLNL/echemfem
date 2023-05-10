@@ -347,7 +347,7 @@ solver.init_solver_parameters(
 solver.save_solutions = False
 solver.setup_solver(initial_solve=True)
 solver.solve()
-c1, U = solver.u.split()
+c1, U = solver.u.subfunctions
 errc1 = errornorm(solver.C1ex, c1)
 errU = errornorm(solver.Uex, U)
 err = errc1 + errU

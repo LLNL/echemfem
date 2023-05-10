@@ -2,12 +2,6 @@ import pytest
 from firedrake import *
 from echemfem import EchemSolver
 
-import sys
-import petsc4py
-petsc4py.init(sys.argv)
-
-PETSc.Sys.popErrorHandler()
-
 
 class AdvectionSolver(EchemSolver):
     def __init__(self, N, extruded=False):
@@ -79,7 +73,7 @@ def test_convergence(extruded=False):
         solver = AdvectionSolver(2**(i + 1), extruded)
         solver.setup_solver()
         solver.solve()
-        c1, c2 = solver.u.split()
+        c1, c2 = solver.u.subfunctions
         err = errornorm(solver.C1ex, c1) + errornorm(solver.C2ex, c2)
         assert err < 0.26 * err_old
         err_old = err

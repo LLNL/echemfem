@@ -192,7 +192,7 @@ def test_convergence(extruded=False, gmg=False):
             solver = DiffusionMigrationSolver(i, extruded, gmg)
         solver.setup_solver()
         solver.solve()
-        c1, U = solver.u.split()
+        c1, U = solver.u.subfunctions
         errc1 = errornorm(solver.C1ex, c1)
         errU = errornorm(solver.Uex, U)
         err = errc1 + errU
