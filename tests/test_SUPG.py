@@ -77,7 +77,7 @@ def test_convergence_low_peclet_CG(extruded=False):
         solver = AdvectionDiffusionSolver(2**(i + 1), 1., extruded=extruded)
         solver.setup_solver(initial_guess=False)
         solver.solve()
-        c1, c2 = solver.u.split()
+        c1, c2 = solver.u.subfunctions
         err = errornorm(solver.C1ex, c1) + errornorm(solver.C2ex, c2)
         assert err < 0.26 * err_old
         err_old = err
@@ -92,7 +92,7 @@ def test_convergence_high_peclet_CG(extruded=False):
         solver = AdvectionDiffusionSolver(2**(i + 2), 1e-4, extruded=extruded)
         solver.setup_solver(initial_guess=False)
         solver.solve()
-        c1, c2 = solver.u.split()
+        c1, c2 = solver.u.subfunctions
         err = errornorm(solver.C1ex, c1) + errornorm(solver.C2ex, c2)
         assert err < 0.26 * err_old
         err_old = err
