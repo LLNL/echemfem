@@ -6,6 +6,7 @@ from petsc4py import PETSc
 from mpi4py import MPI
 from pyop2.mpi import COMM_WORLD
 import pandas
+from echemfem import CylindricalMeasure
 
 import FIAT
 import finat
@@ -43,7 +44,8 @@ class EchemSolver(ABC):
             p=1,
             family="DG",
             p_penalty=None,
-            SUPG = False):
+            SUPG=False,
+            cylindrical=False):
 
         self.physical_params = physical_params
         self.conc_params = conc_params
@@ -72,15 +74,13 @@ class EchemSolver(ABC):
                      "electroneutrality full": False, # no elimination
                      "poisson": False,
                      "porous": False,
-                     "darcy": False,
-                     "advection gas only": False,
+                     "darcy": False, # adds pressure variable(s), velocity(ies) defined by Darcy's law.
+                     "advection gas only": False, # Need a second velocity for gas phase
                      "diffusion finite size_BK": False,
                      "diffusion finite size_CS": False,
                      "diffusion finite size_SP": False,
                      "diffusion finite size_SMPNP": False,
                      "diffusion finite size_BMCSL": False
-                     # adds pressure variable(s), velocity(ies) defined by Darcy's law.
-                     # Need a second velocity for gas phase
                      }
 
         self.SUPG = SUPG
@@ -151,9 +151,24 @@ class EchemSolver(ABC):
 
         quadrature_rule = None
         quadrature_rule_face = None
+        if cylindrical:
+            print = PETSc.Sys.Print
+            print("Using cylindrical coordinates")
+            # cylindrical coordinates with azimuthal symmetry (2D mesh)
+            if mesh.topological_dimension() != 2:
+                raise NotImplementedError(
+                    'Cylindrical coordinates require a 2D mesh')
+            r, z = SpatialCoordinate(mesh)
+            _dx = CylindricalMeasure(r, 'cell')
+            _ds = CylindricalMeasure(r, 'exterior_facet')
+            _dS = CylindricalMeasure(r, 'interior_facet')
+        else:
+            _dx = dx
+            _ds = ds
+            _dS = dS
 
         def _internal_dx(subdomain_id=None, domain=None):
-            return dx(
+            return _dx(
                 subdomain_id=subdomain_id,
                 domain=domain,
                 scheme=quadrature_rule)
@@ -174,13 +189,13 @@ class EchemSolver(ABC):
                                                               scheme=quadrature_rule_face)
         else:
             def _internal_ds(subdomain_id=None, domain=None):
-                return ds(
+                return _ds(
                     subdomain_id=subdomain_id,
                     domain=domain,
                     scheme=quadrature_rule_face)
 
             def _internal_dS(subdomain_id=None, domain=None):
-                return dS(
+                return _dS(
                     subdomain_id=subdomain_id,
                     domain=domain,
                     scheme=quadrature_rule_face)
@@ -1392,7 +1407,7 @@ class EchemSolver(ABC):
         if bulk_reaction is not None:
             bulk_reaction_term = bulk_reaction(u)[i_c]
             if bulk_reaction_term != 0:
-                a -= bulk_reaction_term * test_fn * dx()
+                a -= bulk_reaction_term * test_fn * self.dx()
 
         if self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]:
             U = u[self.num_mass]
@@ -1443,7 +1458,7 @@ class EchemSolver(ABC):
                     if ai is not None and ai != 0.0:
                         denominator -= NA * ai ** 3 * u[i]
                         numerator += NA * ai ** 3 * grad(u[i])
-                a += D * C * inner(numerator / denominator,  grad(test_fn)) * dx()
+                a += D * C * inner(numerator / denominator,  grad(test_fn)) * self.dx()
 
         if self.flow["diffusion finite size_BK"]:
             NA = self.physical_params["Avogadro constant"]
@@ -1453,7 +1468,7 @@ class EchemSolver(ABC):
                 if ai is not None and ai != 0.0:
                     phi += NA * ai ** 3 * u[i]
             mu_ex = -ln(1 - phi)
-            a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * dx()
+            a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * self.dx()
             if bulk_dirichlet is not None:
                 bcs.append(DirichletBC(self.W.sub(i_c), C_0, bulk_dirichlet))
 
@@ -1465,7 +1480,7 @@ class EchemSolver(ABC):
                 if ai is not None and ai != 0.0:
                     phi += NA * ai ** 3 * u[i]
             mu_ex = phi*(8 - 9*phi + 3*phi**2)/(1 - phi)**3
-            a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * dx()
+            a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * self.dx()
             if bulk_dirichlet is not None:
                 bcs.append(DirichletBC(self.W.sub(i_c), C_0, bulk_dirichlet))
 
@@ -1477,7 +1492,7 @@ class EchemSolver(ABC):
                 if ai is not None and ai != 0.0:
                     phi += NA * ai ** 3 * u[i]
             mu_ex = -ln(1 - 8*phi)
-            a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * dx()
+            a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * self.dx()
             if bulk_dirichlet is not None:
                 bcs.append(DirichletBC(self.W.sub(i_c), C_0, bulk_dirichlet))
 
@@ -1495,7 +1510,7 @@ class EchemSolver(ABC):
 
             mu_ex = -ln(1 - phi)
 
-            a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * dx()
+            a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * self.dx()
 
             if bulk_dirichlet is not None:
                 bcs.append(DirichletBC(self.W.sub(i_c), C_0, bulk_dirichlet))
@@ -1523,7 +1538,7 @@ class EchemSolver(ABC):
                     + (3*psi2**3*ai**3)/(1 - psi3)**3 + ((3*psi2**2*ai**2)/(psi3))*((1-3*psi3*0.5)/(1-psi3)**2)  \
                     - (psi2**3 * ai**3)*(4*psi3**2 - 5*psi3 + 2)/(psi3**2*(1 - psi3)**3)
 
-            a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * dx()
+            a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * self.dx()
 
             if bulk_dirichlet is not None:
                 bcs.append(DirichletBC(self.W.sub(i_c), C_0, bulk_dirichlet))
@@ -1556,10 +1571,10 @@ class EchemSolver(ABC):
                 #Pe_f = conditional(gt(Pe, 1), 1., Pe/3) # BrezziMariniRusso
                 delta_k = hk / 2. / u_norm * Pe_f
                 # p = 1
-                a += delta_k * inner(dot(flow, grad(C)), dot(flow, grad(test_fn))) * dx()
+                a += delta_k * inner(dot(flow, grad(C)), dot(flow, grad(test_fn))) * self.dx()
                 if bulk_reaction is not None:
                     if bulk_reaction_term != 0:
-                        a -= bulk_reaction_term * delta_k * dot(flow, grad(test_fn)) * dx()
+                        a -= bulk_reaction_term * delta_k * dot(flow, grad(test_fn)) * self.dx()
 
 
             applied = self.boundary_markers.get("applied")
@@ -1710,7 +1725,7 @@ class EchemSolver(ABC):
                 # Gamma_I
                 flow_N = 0.5 * (dot(flow, n) + abs(dot(flow, n)))
                 a += (test_fn('+') - test_fn('-')) * \
-                    (flow_N('+') * X('+') - flow_N('-') * X('-')) * dS
+                    (flow_N('+') * X('+') - flow_N('-') * X('-')) * self.dS()
             elif self.SUPG: # SUPG
                 hk = CellDiameter(mesh)
                 u_norm = inner(flow, flow) ** 0.5
@@ -1718,7 +1733,7 @@ class EchemSolver(ABC):
                 delta_k = hk / 2. / u_norm * \
                         conditional(gt(Pe, 1), 1. - 1./Pe, 0) # Wathen
                 # p = 1
-                a += delta_k * inner(dot(flow, grad(X)), dot(flow, grad(test_fn))) * dx()
+                a += delta_k * inner(dot(flow, grad(X)), dot(flow, grad(test_fn))) * self.dx()
             # Gamma Inlet
             if gas_inlet is not None:
                 a += conditional(dot(flow, n) < 0, test_fn * \
