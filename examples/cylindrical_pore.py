@@ -54,8 +54,8 @@ class PorousSolver(EchemSolver):
     def __init__(self):
 
         def bulk_reaction(y):
-            yCO2 = y[0]
-            yOH = y[1]
+            yCO2 = y[self.i_c["CO2"]]
+            yOH = y[self.i_c["OH"]]
             rCO2 = - k2 * yCO2 * yOH
             rOH = 2 * rCO2
             rCO3 = - rCO2
@@ -114,8 +114,8 @@ class PorousSolver(EchemSolver):
                            }
 
         def reaction_CO2RR(u):
-            CCO2 = u[0]
-            Phi2 = u[5]
+            CCO2 = u[self.i_c["CO2"]]
+            Phi2 = u[self.i_Ul]
             Phi1 = physical_params["U_app"]
             UCO2RR = U0CO2RR
             etaCO2RR = Phi1 - Phi2 - UCO2RR  # reaction overpotential (V)
@@ -123,7 +123,7 @@ class PorousSolver(EchemSolver):
             return active * iCO2RR
 
         def reaction_HER(u):
-            Phi2 = u[5]
+            Phi2 = u[self.i_Ul]
             Phi1 = physical_params["U_app"]
             UHER = U0HER
             etaHER = Phi1 - Phi2 - UHER  # reaction overpotential (V)

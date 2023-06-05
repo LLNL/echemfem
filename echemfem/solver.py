@@ -267,6 +267,18 @@ class EchemSolver(ABC):
         # Liquid pressure, liquid pressure equation
         # Gas pressure, gas pressure equation
 
+        # indices of the different variables in the solution vector. only for u[i] if using vector_mix
+        self.i_c = {}
+        for i in range(self.num_liquid):
+            self.i_c.update({conc_params[i]["name"]: i})
+        self.i_g = {}
+        for i in range(self.num_gas):
+            self.i_g.update({gas_params[i]["name"]: self.num_liquid + 1})
+        if self.flow["electroneutrality"] or self.flow["poisson"] or self.flow["electroneutrality full"]:
+            self.i_Ul = self.num_mass
+            if self.flow["porous"]:
+                self.i_Us = self.num_mass + 1
+
         # setup pressure variables for Darcy's law
         if self.flow["darcy"]:
             if self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]:
@@ -307,7 +319,7 @@ class EchemSolver(ABC):
             self.set_gas_density(
                 us[self.num_liquid:self.num_liquid + self.num_gas], self.pg, gas_params)
 
-        # setup applied current
+        # setup applied voltage
         if self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]:
             U_app = physical_params["U_app"]
             if isinstance(U_app, (Constant, Function)):
@@ -465,10 +477,9 @@ class EchemSolver(ABC):
                     if self.gas_params:
                         i_pg = i_pl + 1
             else:
-                if self.flow["electroneutrality"] or self.flow["poisson"] or self.flow["electroneutrality full"]:
-                    i_Ul = self.num_mass
-                    if self.flow["porous"]:
-                        i_Us = self.num_mass + 1
+                i_Ul = self.i_Ul
+                if self.flow["porous"]:
+                    i_Us = self.i_Us
                 if self.flow["darcy"]:
                     i_pl = self.i_pl
                     if self.gas_params:
