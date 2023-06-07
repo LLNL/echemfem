@@ -32,11 +32,11 @@ k2 = 2.19e3 * 1e-3 # m^3/mol/s
 cref = 1e3          # reference concentration (mol/m3)
 
 # diffusion coefficients (m2/s)
-# [CO2 OH- CO32- CO H2 K+]	
-D = [1.910e-9, 5.29e-9, 0.92e-9, 2.03e-9, 4.5e-9, 1.96e-9]
+# [CO2 OH- CO32 K+ CO H2]	
+D = [1.910e-9, 5.29e-9, 0.92e-9, 1.96e-9, 2.03e-9, 4.5e-9]
 
 # charges
-z = [0, -1, -2, 0, 0, 1]
+z = [0, -1, -2, 1, 0, 0]
 
 # Bulk Electrolyte concentrations
 cKb = 1000                # mol/m3
@@ -45,7 +45,7 @@ c0CO3b = 0.
 c0CO2b = 0.
 c0COb = 0.
 c0H2b = 0.
-cb = np.array([c0CO2b, c0OHb, c0CO3b, c0COb, c0H2b, cKb])
+cb = np.array([c0CO2b, c0OHb, c0CO3b, cKb, c0COb, c0H2b])
 H_CO2 = 0.015e3
 H_H2 = 0.
 H_CO = 0.
@@ -54,12 +54,20 @@ class PorousSolver(EchemSolver):
     def __init__(self):
 
         def bulk_reaction(y):
-            yCO2 = y[self.i_c["CO2"]]
-            yOH = y[self.i_c["OH"]]
+            i_CO2 = self.i_c["CO2"]
+            i_OH = self.i_c["OH"]
+            i_CO3 = self.i_c["CO3"]
+            yCO2 = y[i_CO2]
+            yOH = y[i_OH]
             rCO2 = - k2 * yCO2 * yOH
             rOH = 2 * rCO2
             rCO3 = - rCO2
-            return [rCO2, rOH, rCO3, 0., 0., 0.] 
+            rxns = [0.] * self.num_c
+            rxns[i_CO2] = rCO2
+            rxns[i_OH] = rOH
+            rxns[i_CO3] = rCO3
+            return rxns
+
 
         mesh = RectangleMesh(100,500, 2e-6, 10e-6,quadrilateral=True)
         _,Z = SpatialCoordinate(mesh)
@@ -85,24 +93,25 @@ class PorousSolver(EchemSolver):
                             "bulk": cb[2],
                             })
 
-        conc_params.append({"name": "CO",
+        conc_params.append({"name": "K",
                             "diffusion coefficient": D[3],
                             "z": z[3],
                             "bulk": cb[3],
+                            "eliminated": True,
+                            })
+
+        conc_params.append({"name": "CO",
+                            "diffusion coefficient": D[4],
+                            "z": z[4],
+                            "bulk": cb[4],
                             "gas": H_CO,
                             })
 
         conc_params.append({"name": "H2",
-                            "diffusion coefficient": D[4],
-                            "z": z[4],
-                            "bulk": cb[4],
-                            "gas": H_H2,
-                            })
-
-        conc_params.append({"name": "K",
                             "diffusion coefficient": D[5],
                             "z": z[5],
                             "bulk": cb[5],
+                            "gas": H_H2,
                             })
 
         physical_params = {"flow": ["diffusion", "migration", "electroneutrality"],
@@ -177,7 +186,7 @@ for Vs in Vlist:
     solver.U_app.assign(Vs)
     print("V = %d mV" % np.rint(Vs * 1000))
     solver.solve()
-    # [CO2 OH- CO32- CO H2 K+]	
+    # [CO2 OH- CO32- CO H2]	
     cCO2, cOH, cCO3, cCO, cH2, phi2 = solver.u.subfunctions
     cK = Function(solver.V).assign(2 * cCO3 + cOH)
 

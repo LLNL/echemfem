@@ -109,16 +109,26 @@ class EchemSolver(ABC):
             raise NotImplementedError(
                 'advection gas only requires gaseous species')
 
+        # list of conc_params indices that are not eliminated
+        self.idx_c = list(range(self.num_c))
         # Other parts of the code currently assumes the last concentration is
         # the eliminated one
         if self.flow["electroneutrality"]:
             i = 0
-            for c in conc_params:
+            for idx, c in enumerate(conc_params):
                 if c.get("eliminated") is not None:
                     i += 1
+                    self.i_el = idx
+            # By default the last conc_params is eliminated
             if i == 0:
                 conc_params[-1]["eliminated"] = True
+                self.i_el = idx
+            self.idx_c.remove(self.i_el)
+            print = PETSc.Sys.Print
+            print("Eliminating species: " + conc_params[self.i_el]["name"])
+            assert not conc_params[self.i_el]["z"] == 0, "Eliminated species must have non-zero charge. Add \"eliminated\": True to a species with non-zero charge."
             assert i < 2, "Can only eliminate one aqueous concentration"
+
         if self.gas_params:
             i = 0
             for g in gas_params:
@@ -270,7 +280,7 @@ class EchemSolver(ABC):
         # indices of the different variables in the solution vector. only for u[i] if using vector_mix
         self.i_c = {}
         for i in range(self.num_liquid):
-            self.i_c.update({conc_params[i]["name"]: i})
+            self.i_c.update({conc_params[self.idx_c[i]]["name"]: i})
         self.i_g = {}
         for i in range(self.num_gas):
             self.i_g.update({gas_params[i]["name"]: self.num_liquid + 1})
@@ -339,19 +349,18 @@ class EchemSolver(ABC):
 
         # mass conservation of aqueous species
         for i in range(self.num_liquid):
-            if conc_params[i].get("eliminated") is None:
-                if self.flow["electroneutrality full"] and i == self.num_liquid-1:
-                    test_fn = v[i+1] # to avoid zeroes on the diagonal. last species must have a charge
-                else:
-                    test_fn = v[i]
-                conc_params[i]["i_c"] = i
-                a, bc = self.mass_conservation_form(
-                    us[i], test_fn, conc_params[i], u=us)
-                weight = conc_params[i].get("residual weight")
-                if weight is None:
-                    weight = 1.0
-                Form += weight * a
-                bcs += bc
+            if self.flow["electroneutrality full"] and i == self.num_liquid-1:
+                test_fn = v[i+1] # to avoid zeroes on the diagonal. last species must have a charge
+            else:
+                test_fn = v[i]
+            conc_params[self.idx_c[i]]["i_c"] = i
+            a, bc = self.mass_conservation_form(
+                us[i], test_fn, conc_params[self.idx_c[i]], u=us)
+            weight = conc_params[self.idx_c[i]].get("residual weight")
+            if weight is None:
+                weight = 1.0
+            Form += weight * a
+            bcs += bc
 
         # mass conservation of gaseous species
         for i in range(self.num_gas):
@@ -477,15 +486,16 @@ class EchemSolver(ABC):
                     if self.gas_params:
                         i_pg = i_pl + 1
             else:
-                i_Ul = self.i_Ul
-                if self.flow["porous"]:
-                    i_Us = self.i_Us
+                if self.flow["electroneutrality"] or self.flow["poisson"] or self.flow["electroneutrality full"]:
+                    i_Ul = self.i_Ul
+                    if self.flow["porous"]:
+                        i_Us = self.i_Us
                 if self.flow["darcy"]:
                     i_pl = self.i_pl
                     if self.gas_params:
                         i_pg = self.i_pg
             for i in range(self.num_liquid):
-                bulk = self.conc_params[i]["bulk"]
+                bulk = self.conc_params[self.idx_c[i]]["bulk"]
                 if isinstance(bulk, (float, int)):
                     if self.vector_mix:
                         u.sub(0).sub(i).assign(bulk)
@@ -740,7 +750,7 @@ class EchemSolver(ABC):
             collection.append(
                 Function(
                     self.V,
-                    name=self.conc_params[i]["name"]).assign(
+                    name=self.conc_params[self.idx_c[i]]["name"]).assign(
                     uviz[i]))
 
         if self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]:
@@ -749,17 +759,20 @@ class EchemSolver(ABC):
 
         if self.flow["electroneutrality"]:
             C_el = 0.0
-            for i in range(self.num_liquid):
-                C_ND = self.conc_params[i].get("C_ND")
-                if C_ND is None:
-                    C_ND = 1.0
-                C_el += self.conc_params[i]["z"] * uviz[i] * C_ND
-            C_ND = self.conc_params[-1].get("C_ND")
-            if C_ND is None:
-                C_ND = 1.0
-            C_el = -C_el / self.conc_params[self.num_liquid]["z"] / C_ND
+            for i in range(self.num_liquid+1):
+                if i == self.i_el:
+                    z_el = self.conc_params[i]["z"]
+                    C_ND_el = self.conc_params[i].get("C_ND")
+                    if C_ND_el is None:
+                        C_ND_el = 1.0
+                else:
+                    C_ND = self.conc_params[i].get("C_ND")
+                    if C_ND is None:
+                        C_ND = 1.0
+                    C_el += self.conc_params[i]["z"] * uviz[i] * C_ND
+            C_el = -C_el / z_el / C_ND_el
             collection.append(
-                Function(self.V, name=self.conc_params[self.num_liquid]["name"]).assign(C_el))
+                Function(self.V, name=self.conc_params[self.i_el]["name"]).assign(C_el))
 
         r.write(*collection)
 
@@ -1421,7 +1434,7 @@ class EchemSolver(ABC):
                 a -= bulk_reaction_term * test_fn * self.dx()
 
         if self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]:
-            U = u[self.num_mass]
+            U = u[self.i_Ul]
             z = conc_params["z"]
             F = self.physical_params["F"]
             R = self.physical_params["R"]
@@ -1808,21 +1821,20 @@ class EchemSolver(ABC):
             D_IP2 = C_IP * max_value(self.penalty_degreeU**2, 1) / he
             K_IP = -1  # SIP
 
-        n_c = self.num_c
-        n_m = self.num_mass
         a = 0.0
         bcs = []
         K_U = 0.0
         C_n = 0.0  # eliminated concentration
 
-        U = u[n_m]
+        U = u[self.i_Ul]
         if self.flow["porous"]:
             av0 = self.physical_params["specific surface area"]
             av = av0 * self.Sw
         if bulk_reaction is not None:
             reactions = bulk_reaction(u)
 
-        for i in range(n_c):
+        # Do eliminated concentration last
+        for i in self.idx_c + [self.i_el]:
             z = conc_params[i]["z"]
             if z != 0.0:
                 C_0 = conc_params[i]["bulk"]
@@ -1830,8 +1842,8 @@ class EchemSolver(ABC):
                 if C_ND is None:
                     C_ND = 1.0
                 C_gas = conc_params[i].get("gas")
-                if i < self.num_liquid:
-                    C = u[i]
+                if not i == self.i_el:
+                    C = u[conc_params[i]["i_c"]]
                     C_n += z * C * C_ND  # electroneutrality constraint
                 else:
                     C = -C_n / z / C_ND
@@ -1927,7 +1939,7 @@ class EchemSolver(ABC):
                            * n, test_fn * n) * self.ds(dirichlet)
             #else:
             if i_bc is None:
-                bcs.append(DirichletBC(self.W.sub(n_m), U_0, dirichlet))
+                bcs.append(DirichletBC(self.W.sub(self.i_Ul), U_0, dirichlet))
             else:
                 bcs.append(DirichletBC(W.sub(i_bc), U_0, dirichlet)) # for initial guess
 
@@ -1991,12 +2003,10 @@ class EchemSolver(ABC):
             D_IP2 = C_IP * max_value((self.penalty_degreeU)**2, 1) / he
             K_IP = -1  # SIP
 
-        n_c = self.num_c
-        n_m = self.num_mass
         if self.flow["porous"] and solid:
-            i_u = n_m + 1
+            i_u = self.i_Us
         else:
-            i_u = n_m
+            i_u = self.i_Ul
         U = u[i_u]
 
         if self.flow["porous"]:
@@ -2019,10 +2029,18 @@ class EchemSolver(ABC):
         bulk_reaction = self.physical_params.get("bulk reaction")
         if bulk_reaction is not None:
             reactions = bulk_reaction(u)
-        for i in range(n_c):
+        
+        if self.flow["electroneutrality"]:
+            rang = self.idx_c + [self.i_el]
+            i_el = self.i_el
+        else:
+            i_el = None
+            rang = range(self.num_liquid)
+        # Do eliminated concentration last
+        for i in rang:
             z = conc_params[i]["z"]
-            if i < self.num_liquid:
-                C = u[i]
+            if not i == i_el:
+                C = u[conc_params[i]["i_c"]]
                 C_n += z * C  # electroneutrality constraint
             else:
                 C = -C_n / z
@@ -2154,14 +2172,12 @@ class EchemSolver(ABC):
             D_IP3 = C_IP * max_value((self.penalty_degreeU)**2, 1) / he
             K_IP = -1  # SIP
 
-        n_c = self.num_c
-        n_m = self.num_mass
         a = 0.0
         bcs = []
         K_U = 0.0
         C_n = 0.0  # eliminated concentration
 
-        U = u[n_m]
+        U = u[self.i_Ul]
         av0 = self.physical_params["specific surface area"]
         av = av0 * self.Sw
 
@@ -2201,13 +2217,14 @@ class EchemSolver(ABC):
             else:
                 bcs.append(DirichletBC(W.sub(i_bc), p_0, dirichlet)) # for initial guess
 
-        for i in range(n_c):
+        # Do eliminated concentration last
+        for i in self.idx_c + [self.i_el]:
             z = conc_params[i]["z"]
             mass = conc_params[i].get("molar mass")
             C_0 = conc_params[i]["bulk"]
             C_gas = conc_params[i].get("gas")
-            if i < self.num_liquid:
-                C = u[i]
+            if not i == self.i_el:
+                C = u[conc_params[i]["i_c"]]
                 C_n += z * C  # electroneutrality constraint
             else:
                 C = -C_n / z
@@ -2420,13 +2437,11 @@ class EchemSolver(ABC):
             K_IP = -1  # SIP
 
         n_g = self.num_g
-        n_c = self.num_c
-        n_m = self.num_mass
         a = 0.0
         bcs = []
         X_n = 0.0  # eliminated concentration
 
-        U = u[n_m]
+        U = u[self.i_Ul]
         av0 = self.physical_params["specific surface area"]
         av = av0 * self.Sw
 
