@@ -1622,7 +1622,8 @@ class EchemSolver(ABC):
                 idx = inlet
                 if idx_app is not None:
                     idx = tuple(set(idx) - set(idx_app))
-                a += conditional(dot(vel, n) < 0, test_fn *
+                if C_0 != 0.0:
+                    a += conditional(dot(vel, n) < 0, test_fn *
                                  dot(vel, n) * C_0, 0.0) * self.ds(idx)
             # Gamma Outlet
             if outlet is not None:
@@ -1760,7 +1761,8 @@ class EchemSolver(ABC):
                 a += delta_k * inner(dot(flow, grad(X)), dot(flow, grad(test_fn))) * self.dx()
             # Gamma Inlet
             if gas_inlet is not None:
-                a += conditional(dot(flow, n) < 0, test_fn * \
+                if X_gas != 0.0:
+                    a += conditional(dot(flow, n) < 0, test_fn * \
                                  dot(flow, n) * X_gas, 0.0) * self.ds(gas_inlet)
             # if gas is not None and X_gas is not None:
             #    a += conditional(dot(flow, n) < 0, test_fn *
