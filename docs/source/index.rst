@@ -18,4 +18,4 @@ Contents
 .. toctree::
 
    quickstart
-   boundary_conditions
+   user_guide/index
