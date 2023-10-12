@@ -1430,7 +1430,7 @@ class EchemSolver(ABC):
         
         n_c = self.num_c
         i_c = conc_params["i_c"]
-        D = conc_params["diffusion coefficient"]
+        D = conc_params.get("diffusion coefficient")
         C_0 = conc_params["bulk"]
         C_gas = conc_params.get("gas")
         inlet = self.boundary_markers.get("inlet")
