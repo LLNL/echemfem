@@ -16,6 +16,12 @@ Contents
 --------
 
 .. toctree::
+   :maxdepth: 2
 
    quickstart
    user_guide/index
+
+.. toctree::
+   :titlesonly:
+
+   api

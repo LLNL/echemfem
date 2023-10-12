@@ -31,6 +31,27 @@ def gauss_lobatto_legendre_cube_rule(dimension, degree):
 
 
 class EchemSolver(ABC):
+    """Base class for an electrochemical model solver.
+
+    Extended description of class
+
+    Attributes:
+        conc_params (list): List containing one dictionary for each species.
+            Each dictionary contains physical parameters for the species.
+        physical_params (dict): Dictionary containing physical parameters 
+        mesh (firedrake.Mesh): Mesh object from firedrake
+        echem_params (list): List containing one dictionary for each charge-transfer reaction.
+        gas_params (list): List containing one dictionary for each gaseous 
+            species. Each dictionary contains physical parameters for the gaseous
+            species. Note that this implementation is not yet validated.
+        stats_file (str): File name for performance statistics
+        overwrite_stats_file (bool): Set to True to overwrite new file.
+        p (int): Polynomial degree of finite elements.
+        family (str): Finite element family. Choose between "CG" and "DG".
+        p_penalty (str): Polynomial degree of the DG penalization. Only used for P-multigrid.,
+        SUPG (bool): Streamline upwind diffusion for stablization of the advection-migration term. Only used for CG.
+        cylindrical (bool): if True, uses symmetric cylindrical coordinates (r, z).
+    """
 
     def __init__(
             self,
@@ -1354,8 +1375,11 @@ class EchemSolver(ABC):
 
     def set_function_spaces(self, layers, family):
         """Set base function spaces
+
         self.V  : FunctionSpace for concentrations
+
         self.Vu : FunctionSpace for potentials (if using Poisson or Electroneutrality)
+
         self.Vp : FunctionSpace for pressures (if using Darcy)
         """
 
@@ -1398,7 +1422,8 @@ class EchemSolver(ABC):
             test_fn,
             conc_params,
             u=None):
-        """Returns weak form of a mass conservation equation for an aqueous species
+        """Returns weak form of a mass conservation equation for an aqueous species.
+
         DG: Using interior penalty for the diffusion term and upwinding for the
         advection-diffusion term.
         """
@@ -1667,7 +1692,8 @@ class EchemSolver(ABC):
         return a, bcs
 
     def gas_mass_conservation_form(self, X, test_fn, gas_params, u=None):
-        """Returns weak form of a mass conservation equation for a gaseous species
+        """Returns weak form of a mass conservation equation for a gaseous species.
+
         Using interior penalty for the diffusion term and upwinding for the
         advection tterm.
         """
@@ -1799,7 +1825,8 @@ class EchemSolver(ABC):
         return a, bcs
 
     def charge_conservation_form(self, u, test_fn, conc_params, W=None, i_bc=None):
-        """Returns weak form of the charge conservation equation for liquid potential
+        """Returns weak form of the charge conservation equation for liquid potential.
+
         Using interior penalty for potential gradient
         """
 
@@ -1948,8 +1975,9 @@ class EchemSolver(ABC):
         return a, bcs
 
     def electroneutrality_form(self, u, test_fn, conc_params):
-        """Returns weak form for the electroneutrality condition 
-        Only useable for CG
+        """Returns weak form for the electroneutrality condition.
+
+        Only useable for CG.
         """
 
         n_c = self.num_c
@@ -1981,7 +2009,8 @@ class EchemSolver(ABC):
         
 
     def potential_poisson_form(self, u, test_fn, conc_params, solid=False, W=None, i_bc=None):
-        """Returns weak form of the Poisson equation for a potential
+        """Returns weak form of the Poisson equation for a potential.
+
         DG: Using interior penalty for potential gradient
         """
 
@@ -2150,7 +2179,8 @@ class EchemSolver(ABC):
 
 
     def liquid_pressure_form(self, p, test_fn, conc_params, u=None, W=None, i_bc=None):
-        """Returns weak form of Pressure equation, i.e. the water mass conservation equation
+        """Returns weak form of Pressure equation, i.e. the water mass conservation equation.
+
         DG: Using interior penalty for pressure gradient
         """
 
@@ -2286,7 +2316,8 @@ class EchemSolver(ABC):
 
     def gas_mass_conservation_form_pressure(
             self, p, test_fn, gas_params, u=None, W=None, i_bc=None):
-        """Returns weak form of the mass conservation equation for a gaseous species
+        """Returns weak form of the mass conservation equation for a gaseous species.
+
         DG: Using interior penalty for the pressure diffusion term
         """
 
@@ -2416,6 +2447,7 @@ class EchemSolver(ABC):
     def gas_pressure_form(self, p, test_fn, gas_params, u=None):  # currently unused
         """Returns weak form of the gas Pressure equation, i.e. the total gaseous mass
         conservation equation.
+
         DG: Using interior penalty for the pressure diffusion term.
         """
 
