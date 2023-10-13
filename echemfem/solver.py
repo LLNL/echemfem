@@ -1431,7 +1431,7 @@ class EchemSolver(ABC):
         n_c = self.num_c
         i_c = conc_params["i_c"]
         D = conc_params.get("diffusion coefficient")
-        C_0 = conc_params["bulk"]
+        C_0 = conc_params.get("bulk")
         C_gas = conc_params.get("gas")
         inlet = self.boundary_markers.get("inlet")
         outlet = self.boundary_markers.get("outlet")
@@ -1866,7 +1866,7 @@ class EchemSolver(ABC):
         for i in self.idx_c + [self.i_el]:
             z = conc_params[i]["z"]
             if z != 0.0:
-                C_0 = conc_params[i]["bulk"]
+                C_0 = conc_params[i].get("bulk")
                 C_ND = conc_params[i].get("C_ND")
                 if C_ND is None:
                     C_ND = 1.0
@@ -2253,7 +2253,7 @@ class EchemSolver(ABC):
         for i in self.idx_c + [self.i_el]:
             z = conc_params[i]["z"]
             mass = conc_params[i].get("molar mass")
-            C_0 = conc_params[i]["bulk"]
+            C_0 = conc_params[i].get("bulk")
             C_gas = conc_params[i].get("gas")
             if not i == self.i_el:
                 C = u[conc_params[i]["i_c"]]
