@@ -6,10 +6,11 @@ The physical parameters of each species need to be provided
 each species. Below is a list of different keys that can appear in each dictionary
 
 * :Key: ``"name"``
-  :Type: ``str``
+  :Type: :py:class:`str`
   :Description: Species name. E.g. ``"CO2"``
+  :Uses: Name of field in pvd output. Used to get index in the solution vector.
 * :Key: ``"bulk"``
-  :Type: ``float``, firedrake expression
+  :Type: :py:class:`float`, firedrake expression
   :Description: Concentration at the "bulk". This value is used in :meth:`echemfem.EchemSolver.setup_solver`
 
 

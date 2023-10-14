@@ -486,6 +486,19 @@ class EchemSolver(ABC):
               MPI.Comm.Get_size(MPI.COMM_WORLD))))
 
     def setup_solver(self, initial_guess=True, initial_solve=True):
+        """Sets up the initial guess and solver
+
+        This creates :class:`firedrake.variational_solver.NonlinearVariationalProblem` and
+        :class:`firedrake.variational_solver.NonlinearVariationalSolver` objects stored in
+        self.problem and self.echem_solver, respectively.
+
+        Args:
+            initial_guess (bool): If True, sets all concentrations to their
+                given "bulk" value.
+            initial_solve (bool): If True, solves the system assumes
+                constant concentrations, which provides good initial
+                guesses for the potential(s)
+        """
         self.print_solver_info()
 
         u = self.u
@@ -671,6 +684,8 @@ class EchemSolver(ABC):
         self.echem_solver.snes.ksp.setConvergenceHistory()
 
     def solve(self):
+        """Solves the problem and outputs the solutions
+        """
         self.echem_solver.solve()
         if self.save_solutions:
             self.output_state(self.u)
@@ -746,6 +761,13 @@ class EchemSolver(ABC):
                 df.to_csv(stats, index=False, mode=mode, header=header)
 
     def output_state(self, u, prefix="results/"):
+        """ Outputs the provided state variables in a pvd file
+
+            Args:
+                u (:class:`firedrake.function.Function`): state to output. Must
+                    be same FunctionSpace as self.u
+                prefix (str): path to results directory
+        """
         PETSc.Sys.Print("Writing solutions. This may take a while...")
         if self.vector:
             uviz = u
