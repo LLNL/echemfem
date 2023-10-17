@@ -36,21 +36,21 @@ class EchemSolver(ABC):
     Extended description of class
 
     Attributes:
-        conc_params (list): List containing one dictionary for each species.
+        conc_params (list of dict): List containing one dictionary for each species.
             Each dictionary contains physical parameters for the species.
         physical_params (dict): Dictionary containing physical parameters 
-        mesh (firedrake.Mesh): Mesh object from firedrake
-        echem_params (list): List containing one dictionary for each charge-transfer reaction.
-        gas_params (list): List containing one dictionary for each gaseous 
+        mesh (:class:`firedrake.mesh.MeshGeometry`): Mesh object from firedrake
+        echem_params (list, optional): List containing one dictionary for each charge-transfer reaction.
+        gas_params (list, optional): List containing one dictionary for each gaseous 
             species. Each dictionary contains physical parameters for the gaseous
             species. Note that this implementation is not yet validated.
-        stats_file (str): File name for performance statistics
-        overwrite_stats_file (bool): Set to True to overwrite new file.
-        p (int): Polynomial degree of finite elements.
-        family (str): Finite element family. Choose between "CG" and "DG".
-        p_penalty (str): Polynomial degree of the DG penalization. Only used for P-multigrid.,
-        SUPG (bool): Streamline upwind diffusion for stablization of the advection-migration term. Only used for CG.
-        cylindrical (bool): if True, uses symmetric cylindrical coordinates (r, z).
+        stats_file (str, optional): File name for performance statistics
+        overwrite_stats_file (bool, optional): Set to True to overwrite new file.
+        p (int, optional): Polynomial degree of finite elements.
+        family (str, optional): Finite element family. Choose between "CG" and "DG".
+        p_penalty (str, optional): Polynomial degree of the DG penalization. Only used for P-multigrid.,
+        SUPG (bool, optional): Streamline upwind diffusion for stablization of the advection-migration term. Only used for CG.
+        cylindrical (bool, optional): if True, uses symmetric cylindrical coordinates (r, z).
     """
 
     def __init__(
@@ -495,7 +495,7 @@ class EchemSolver(ABC):
         Args:
             initial_guess (bool): If True, sets all concentrations to their
                 given "bulk" value.
-            initial_solve (bool): If True, solves the system assumes
+            initial_solve (bool): If True, solves the system assuming
                 constant concentrations, which provides good initial
                 guesses for the potential(s)
         """
