@@ -9,6 +9,10 @@ The following transport mechanisms are available: diffusion, advection, electrom
 
 LLNL-CODE-837342
 
+## Documentation
+
+User guide and API documentation can be found here [documentation](https://software.llnl.gov/echemfem/index.html).
+
 ## Installation
 
 Please install the open-source finite element library [Firedrake](https://www.firedrakeproject.org/download.html).
