@@ -1,0 +1,43 @@
+name: Build docs
+run-name: ${{ github.actor }} is building docs
+on: [push]
+jobs:
+  build_docs:
+    runs-on: ubuntu-latest
+    container:
+      image: firedrakeproject/firedrake-docdeps:latest
+      options: --user root
+      volumes:
+        - ${{ github.workspace }}:/home/firedrake/output
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install checkedout Firedrake
+        run: |
+          . /home/firedrake/firedrake/bin/activate
+          python -m pip install -e .
+          pip install sphinx-rtd-theme
+      - name: Build docs
+        run: |
+          . /home/firedrake/firedrake/bin/activate
+          cd docs
+          make html
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          name: github-pages
+          path: /__w/readthedocs/readthedocs/docs/build/html
+          retention-days: 1
+  deploy:
+    name: Deploy Github pages
+    needs: build_docs
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: http://llnl.github.io/echemfem
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
