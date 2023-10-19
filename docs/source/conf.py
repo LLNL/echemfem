@@ -3,7 +3,7 @@
 # -- Project information
 
 project = 'EchemFEM'
-copyright = '2023, Thomas Roy'
+copyright = u'2022-2023, Lawrence Livermore National Laboratory'
 author = 'Thomas Roy'
 
 release = '0.1'
