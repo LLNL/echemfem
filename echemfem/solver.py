@@ -33,7 +33,8 @@ def gauss_lobatto_legendre_cube_rule(dimension, degree):
 class EchemSolver(ABC):
     """Base class for an electrochemical model solver.
 
-    Extended description of class
+    This class is used to create solvers for the transport of multiple ion (or
+    non-charged species).
 
     Attributes:
         conc_params (list of dict): List containing one dictionary for each species.
