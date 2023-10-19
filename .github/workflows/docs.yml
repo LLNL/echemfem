@@ -25,7 +25,7 @@ jobs:
         uses: actions/upload-pages-artifact@v1
         with:
           name: github-pages
-          path: /__w/readthedocs/readthedocs/docs/build/html
+          path: /__w/echemfem/echemfem/docs/build/html
           retention-days: 1
   deploy:
     name: Deploy Github pages
