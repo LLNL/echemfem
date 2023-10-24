@@ -10,7 +10,7 @@ First, please install the open-source finite element library `Firedrake <https:/
 
 EchemFEM is hosted on `GitHub <https://github.com/LLNL/echemfem>`_, and should be cloned from there.
 
-To use EchemFEM, first install it using pip within the Firedrake virtual environment:
+To use EchemFEM, first install it using pip within the Firedrake virtual environment. From the echemfem parent directory:
 
 .. code-block:: console
 

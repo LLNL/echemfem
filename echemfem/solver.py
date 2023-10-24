@@ -2555,17 +2555,39 @@ class EchemSolver(ABC):
         return a, bcs
 
     def set_boundary_markers(self):
-        """Set boundary attributes.
+        """Set boundary attributes
+
+        This method should set self.boundary_markers, a :py:class:`dict`, where
+        the keys are :py:class:`str:` representing the type of boundary
+        condition, and the values are :py:class:`tuple` containing the boundary
+        indices. For example :
+
+        .. code-block::
+            
+            self.boundary_markers = {"bulk": (1,2,)}
+
+        This would set the boundary condition ``"bulk"`` on boundary indices 1 and 2.
+
         """
         raise NotImplementedError('method needs to be implemented by solver')
 
     def set_velocity(self):
-        """Set velocity.
+        """Set velocity
+
+        This method should set self.vel as a Firedrake vector quantity.
         """
         raise NotImplementedError('method needs to be implemented by solver')
 
     def neumann(self, C, conc_params, u):
         """ Custom Neumann Boundary condition
+
+        Args:
+            C: concentration of species i
+            conc_params: conc_params[i], i.e. the concentration parameters of species i
+            u: full solution state
+
+        Returns:
+            normal flux for species i
         """
         raise NotImplementedError('method needs to be implemented by solver')
 
