@@ -2138,7 +2138,7 @@ class EchemSolver(ABC):
 
         if solid:
             for echem in self.echem_params:
-                a -= av * test_fn * echem["reaction"](u) * self.dx()
+                a += av * test_fn * echem["reaction"](u) * self.dx()
 
         # diffusion of potential
         a += inner(K_U * grad(U), grad(test_fn)) * self.dx()
