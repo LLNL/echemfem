@@ -118,6 +118,14 @@ class EchemSolver(ABC):
                 not self.flow["poisson"]) and (not self.flow["electroneutrality full"])):
             raise NotImplementedError(
                 'Migration requires Electroneutrality or Poisson')
+        if self.flow["poisson"] and (self.flow["electroneutrality"] or
+                self.flow["electroneutrality full"]):
+            raise NotImplementedError(
+                'Electroneutrality not compatible with Poisson')
+        for physics in physical_params["flow"]:
+            if "finite size" in physics and family=="DG":
+                raise NotImplementedError(
+                    'finite size effects only implemented with CG')
         if self.flow["darcy"] and (not self.flow["porous"]):
             raise NotImplementedError('Darcy requires a porous model')
         if self.gas_params and not self.flow["darcy"]:

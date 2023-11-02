@@ -29,5 +29,4 @@ Running Examples
 ----------------
 
 Several examples can be found in `echemfem/examples <https://github.com/LLNL/echemfem/examples>`_.
-
-
+Examples using the generalized modified Poisson-Nernst-Planck model (GMPNP) can be found in [FireCat](https://github.com/LLNL/firecat), where it is coupled with a microkinetics model.
