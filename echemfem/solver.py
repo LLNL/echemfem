@@ -385,6 +385,11 @@ class EchemSolver(ABC):
         """
         Form = 0.0
         bcs = [] # Dirichlet BCs for CG
+        self.add_steady_forms(Form, bcs, us, v)
+ 
+    def add_steady_forms(self, Form, bcs, us, v):
+        """ Add steady-state portion of equations to weak forms
+        """
         conc_params = self.conc_params
         gas_params = self.gas_params
 
