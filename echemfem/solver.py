@@ -374,8 +374,19 @@ class EchemSolver(ABC):
         elif self.flow["advection"]:
             self.set_velocity()
 
+        self.setup_forms(us, v)
+
+        self.u = u
+
+        self.init_solver_parameters()
+
+    def setup_forms(self, us, v):
+        """ Setup weak forms
+        """
         Form = 0.0
         bcs = [] # Dirichlet BCs for CG
+        conc_params = self.conc_params
+        gas_params = self.gas_params
 
         # mass conservation of aqueous species
         for i in range(self.num_liquid):
@@ -452,9 +463,6 @@ class EchemSolver(ABC):
 
         self.Form = Form
         self.bcs = bcs
-        self.u = u
-
-        self.init_solver_parameters()
 
     def print_solver_info(self):
         print = PETSc.Sys.Print
