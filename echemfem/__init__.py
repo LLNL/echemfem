@@ -1,3 +1,3 @@
 from echemfem.cylindricalmeasure import CylindricalMeasure
-from echemfem.solver import EchemSolver
+from echemfem.solver import EchemSolver, TransientEchemSolver
 from echemfem.utility_meshes import IntervalBoundaryLayerMesh, RectangleBoundaryLayerMesh

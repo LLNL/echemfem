@@ -383,16 +383,16 @@ class EchemSolver(ABC):
     def setup_forms(self, us, v):
         """ Setup weak forms
         """
-        Form = 0.0
-        bcs = [] # Dirichlet BCs for CG
-        self.add_steady_forms(Form, bcs, us, v)
+        self.Form, self.bcs = self.steady_forms(us, v)
  
-    def add_steady_forms(self, Form, bcs, us, v):
+    def steady_forms(self, us, v):
         """ Add steady-state portion of equations to weak forms
         """
         conc_params = self.conc_params
         gas_params = self.gas_params
 
+        Form = 0.0
+        bcs = [] # Dirichlet BCs for CG
         # mass conservation of aqueous species
         for i in range(self.num_liquid):
             if self.flow["electroneutrality full"] and i == self.num_liquid-1:
@@ -466,8 +466,7 @@ class EchemSolver(ABC):
             Form += a
             bcs += bc
 
-        self.Form = Form
-        self.bcs = bcs
+        return Form, bcs
 
     def print_solver_info(self):
         print = PETSc.Sys.Print
@@ -782,13 +781,16 @@ class EchemSolver(ABC):
                 df = pandas.DataFrame(data, index=[0])
                 df.to_csv(stats, index=False, mode=mode, header=header)
 
-    def output_state(self, u, prefix="results/"):
+    def output_state(self, u, prefix="results/", initiate=True, **kwargs):
         """ Outputs the provided state variables in a pvd file
 
             Args:
-                u (:class:`firedrake.function.Function`): state to output. Must
+                u (:class:`firedrake.function.Function`): State to output. Must
                     be same FunctionSpace as self.u
-                prefix (str): path to results directory
+                prefix (str): Path to results directory
+                initiate (bool): if True, create the output file
+                **kwargs: Arbitrary keyword arguments passed to File.write
+
         """
         PETSc.Sys.Print("Writing solutions. This may take a while...")
         if self.vector:
@@ -802,7 +804,9 @@ class EchemSolver(ABC):
         else:
             uviz = u.subfunctions
 
-        r = File(prefix + "collection.pvd")
+        if initiate:
+            self.output_file = File(prefix + "collection.pvd")
+        r = self.output_file
         collection = []
 
         if self.flow["advection"]:
@@ -839,7 +843,7 @@ class EchemSolver(ABC):
             collection.append(
                 Function(self.V, name=self.conc_params[self.i_el]["name"]).assign(C_el))
 
-        r.write(*collection)
+        r.write(*collection, **kwargs)
 
     def write_results_old(self):
         # Output solutions
@@ -2616,3 +2620,107 @@ class EchemSolver(ABC):
         """ Custom Neumann Boundary condition for Poisson
         """
         raise NotImplementedError('method needs to be implemented by solver')
+
+class TransientEchemSolver(EchemSolver):
+    """Transient electrochemical model solver.
+
+        Adds accumulation terms and time loop to create a transient model
+    """
+
+
+    def setup_forms(self, us, v):
+        """ Setup weak forms for transient case
+        """
+        print("Using transient form")
+
+        self.dt = Constant(1)
+        if not hasattr(self, "time"):
+            self.time = Constant(0)
+        self.u_old = Function(self.W)
+        us_old = split(self.u_old)
+
+        # Backward Euler
+        if True:
+            Form, bcs = self.steady_forms(us, v)
+            Form_, bcs_ = self.transient_forms(us, v, us_old)
+            Form += Form_
+            bcs += bcs_
+        # Crank-Nicholson would be something like this
+        elif False:
+            Form = 0.0
+            Form_, bcs = self.steady_forms(us, v)
+            Form += 0.5 * Form_
+            Form_, _ = self.steady_forms(us_old, v)
+            Form += 0.5 * Form_
+            Form_, bcs_ = self.transient_forms(us, v, us_old)
+            Form += Form_
+            bcs += bcs_
+        # Implicit midpoint method would be something like this
+        elif False:
+            Form, bcs = self.steady_forms(Form, bcs, (us + us_old)/2, v)
+            Form_, bcs_ = self.transient_forms(us, v, us_old)
+            Form += Form_
+            bcs += bcs_
+
+        self.Form = Form
+        self.bcs = bcs
+
+    def transient_forms(self, us, v, us_old):
+        """ Add transient portion of equations to weak forms
+        """
+        conc_params = self.conc_params
+        gas_params = self.gas_params
+
+        Form = 0
+        bcs = []
+
+        print("Adding transient form")
+        # mass conservation of aqueous species
+        for i in range(self.num_liquid):
+            if self.flow["electroneutrality full"] and i == self.num_liquid-1:
+                test_fn = v[i+1] # to avoid zeroes on the diagonal. last species must have a charge
+            else:
+                test_fn = v[i]
+            conc_params[self.idx_c[i]]["i_c"] = i
+            a, bc = self.mass_accumulation_form(
+                us[i], us_old[i], test_fn, conc_params[self.idx_c[i]], u=us)
+            weight = conc_params[self.idx_c[i]].get("residual weight")
+            if weight is None:
+                weight = 1.0
+            Form += weight * a
+            bcs += bc
+
+        return Form, bcs
+
+    def mass_accumulation_form(
+            self,
+            C,
+            C_old,
+            test_fn,
+            conc_params,
+            u=None):
+        """Returns weak form of a mass accumulation term for an aqueous species.
+        """
+        print("Adding accum form")
+
+        a = (C - C_old) / self.dt * test_fn * dx()
+        return a, []
+
+    def solve(self, times):
+        """Solves the transient problem and outputs the solutions
+
+        Args:
+            times (list or numpy.array): array of the discrete temporal grid
+
+        """
+
+        if self.save_solutions:
+            self.output_state(self.u, time=times[0])
+        for i in range(len(times))[1:]:
+            self.dt.assign(times[i] - times[i-1]) # calculate timestep
+            self.time.assign(times[i]) # this works for Backward Euler
+            self.echem_solver.solve()
+            self.u_old.assign(self.u)
+
+            if self.save_solutions:
+                self.output_state(self.u, initiate=False, time=times[i])
