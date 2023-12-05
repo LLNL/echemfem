@@ -35,8 +35,8 @@ class AdvectionDiffusionMigrationSolver(EchemSolver):
             return [f1, f2, f3]
 
         def fp():
-            return -div(grad(pex) + self.effective_diffusion(D1) * z1 * grad(U1ex) *
-                        C1ex + self.effective_diffusion(D2) * z2 * grad(U1ex) * C2ex)
+            return -div(grad(pex) + self.effective_diffusion(D1) * z1 * grad(U1ex)
+                        * C1ex + self.effective_diffusion(D2) * z2 * grad(U1ex) * C2ex)
 
         conc_params.append({"name": "C1",
                             "diffusion coefficient": 0.5,

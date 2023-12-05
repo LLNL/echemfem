@@ -45,8 +45,8 @@ class BortelsSolver(EchemSolver):
             R = physical_params["R"]
             T = physical_params["T"]
             eta = V - U
-            return J0 * (exp(F / R / T * (eta)) -
-                            (C / C_b) * exp(-F / R / T * (eta)))
+            return J0 * (exp(F / R / T * (eta))
+                         - (C / C_b) * exp(-F / R / T * (eta)))
 
         def reaction_cathode(u):
             return reaction(u, Constant(0))

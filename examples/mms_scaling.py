@@ -25,21 +25,24 @@ else:
 
 p = Constant(args.degree)
 
+
 class CellIntegralPC(AssembledPC):
     def form(self, pc, test, trial):
         a, bcs = super().form(pc, test, trial)
         return Form(a.integrals_by_type("cell")), bcs
 
+
 class Q1PC(PMGPC):
     """
     p-multigrid coarsening with Lagrange elements
     """
+
     def coarsen_element(self, ele):
         k = super().max_degree(ele)
         if k <= self.coarse_degree:
             raise ValueError
         family = {e.family() for e in ele.sub_elements()} or {ele.family()}
-        #if family <= {"Q", "Lagrange"}:
+        # if family <= {"Q", "Lagrange"}:
         if family <= {"Q", "Lagrange"} or True:
             k = self.coarse_degree
         e = FiniteElement("Lagrange", cell=ele.cell(), degree=k, variant="fdm")
@@ -47,7 +50,8 @@ class Q1PC(PMGPC):
 
     def coarsen_form(self, form, args):
         """recover CG formulation from IP-DG by discarding facet terms"""
-        return super(Q1PC, self).coarsen_form(Form(form.integrals_by_type("cell")), args)            
+        return super(Q1PC, self).coarsen_form(Form(form.integrals_by_type("cell")), args)
+
 
 class BortelsSolver(EchemSolver):
     def __init__(self):
@@ -119,7 +123,6 @@ class BortelsSolver(EchemSolver):
             p=args.degree,
             p_penalty=p)
 
-
     def set_boundary_markers(self):
         self.boundary_markers = {"bulk dirichlet": (1, 2, 3, 4,),
                                  "applied": (1, 2, 3, 4,),
@@ -145,12 +148,15 @@ class BortelsSolver(EchemSolver):
 solver = BortelsSolver()
 
 # Custom solver parameters
+
+
 class CoarsenPenaltyPMGPC(P1PC):
     def coarsen_form(self, form, replace_dict):
         k = 1
         replace_dict[solver.penalty_degree] = Constant(k)
         replace_dict[solver.penalty_degreeU] = Constant(k)
         return super(CoarsenPenaltyPMGPC, self).coarsen_form(form, replace_dict)
+
 
 U_is = solver.num_mass
 is_list = [str(i) for i in range(solver.num_mass)]
@@ -170,13 +176,13 @@ if args.degree == 1:
            "mg_levels": asm,
            "mg_coarse_ksp_type": "preonly",
            "mg_coarse": {
-                   "mat_type": "aij",
-                   "pc_type": "telescope",
-                   "pc_telescope_reduction_factor": REDFACTOR,
-                   "pc_telescope_subcomm_type": "contiguous",
-                   "telescope_pc_type": "lu",
-                   "telescope_pc_factor_mat_solver_type": "mumps",
-               }
+               "mat_type": "aij",
+               "pc_type": "telescope",
+               "pc_telescope_reduction_factor": REDFACTOR,
+               "pc_telescope_subcomm_type": "contiguous",
+               "telescope_pc_type": "lu",
+               "telescope_pc_factor_mat_solver_type": "mumps",
+           }
            }
 
 else:
@@ -184,43 +190,43 @@ else:
     asm = {"pc_type": "python",
            "pc_python_type": "firedrake.AssembledPC",
            "assembled": {
-                "pc_type": "asm",
+               "pc_type": "asm",
                "pc_asm_overlap": 1,
                "sub": {
                    "pc_type": "ilu",
                    "pc_factor_levels": 0,
-                },
+               },
            },
            }
     pmgasm = {"pc_type": "python",
-            "mat_type": "matfree",
-            "pc_python_type": __name__+".CoarsenPenaltyPMGPC",
-                "pmg_mg_levels_ksp_type": "chebyshev",
-                "pmg_mg_levels_ksp_max_it": 4,
-                "pmg_mg_levels_ksp_monitor": None,
-                "pmg_mg_levels_ksp_converged_reason": None,
-                "pmg_mg_levels_ksp_norm_type": "unpreconditioned",
-                "pmg_mg_levels_": {
-                "pc_type": "python",
-                "pc_python_type": __name__ + "." + "CellIntegralPC",
-                "assembled": {
-                "pc_type": "jacobi"
-                }
-                },
-             "pmg_coarse_mat_type": "aij",
-             "pmg_mg_coarse": {
-                    "ksp_type": "gmres",
-                    "ksp_rtol": 1e-1,
-                    "ksp_monitor": None,
-                    "ksp_converged_reason": None,
-                    "pc_type": "asm",
-                    "pc_asm_overlap": 1,
-                    "sub": {
-                       "pc_type": "ilu",
-                       "pc_factor_levels": 0,
-                       }
-           },
-             }
+              "mat_type": "matfree",
+              "pc_python_type": __name__+".CoarsenPenaltyPMGPC",
+              "pmg_mg_levels_ksp_type": "chebyshev",
+              "pmg_mg_levels_ksp_max_it": 4,
+              "pmg_mg_levels_ksp_monitor": None,
+              "pmg_mg_levels_ksp_converged_reason": None,
+              "pmg_mg_levels_ksp_norm_type": "unpreconditioned",
+              "pmg_mg_levels_": {
+                  "pc_type": "python",
+                  "pc_python_type": __name__ + "." + "CellIntegralPC",
+                  "assembled": {
+                      "pc_type": "jacobi"
+                  }
+              },
+              "pmg_coarse_mat_type": "aij",
+              "pmg_mg_coarse": {
+                  "ksp_type": "gmres",
+                  "ksp_rtol": 1e-1,
+                  "ksp_monitor": None,
+                  "ksp_converged_reason": None,
+                  "pc_type": "asm",
+                  "pc_asm_overlap": 1,
+                  "sub": {
+                      "pc_type": "ilu",
+                      "pc_factor_levels": 0,
+                  }
+              },
+              }
     gmg = {"pc_type": "mg",
            "mg_levels_ksp_type": "richardson",
            "mg_levels": asm,
@@ -241,46 +247,46 @@ else:
 
 if args.degree == 1:
     amg = {"pc_type": "hypre",
-            "pc_hypre_boomeramg": {
-            "strong_threshold": 0.7,
-            "coarsen_type": "HMIS",
-            "agg_nl": 3,
-            "interp_type": "ext+i",
-            "agg_num_paths": 5,
-            },
-            }
+           "pc_hypre_boomeramg": {
+               "strong_threshold": 0.7,
+               "coarsen_type": "HMIS",
+               "agg_nl": 3,
+               "interp_type": "ext+i",
+               "agg_num_paths": 5,
+           },
+           }
 else:
     amg = {"pc_type": "hypre"}
 
 pmg = {"pc_type": "python",
-        "mat_type": "matfree",
-        "pc_python_type": __name__+".CoarsenPenaltyPMGPC",
-        #"pc_python_type": __name__+".Q1PC",
-            "pmg_mg_levels_ksp_type": "chebyshev",
-            "pmg_mg_levels_ksp_max_it": 4,
-            "pmg_mg_levels_ksp_monitor": None,
-            "pmg_mg_levels_ksp_norm_type": "unpreconditioned",
-            "pmg_mg_levels_": {
-            "pc_type": "python",
-            "pc_python_type": __name__ + "." + "CellIntegralPC",
-            "assembled": {
-            "pc_type": "jacobi"
-            }
-            },
-            "pmg_coarse_mat_type": "aij",
-         "pmg_mg_coarse": { **{
-                "ksp_type": "cg",
-                "ksp_rtol": 1e-3,
-                "ksp_monitor": None,
-                "ksp_converged_reason": None,
-                },
-                **amg},
-        }
+       "mat_type": "matfree",
+       "pc_python_type": __name__+".CoarsenPenaltyPMGPC",
+       # "pc_python_type": __name__+".Q1PC",
+       "pmg_mg_levels_ksp_type": "chebyshev",
+       "pmg_mg_levels_ksp_max_it": 4,
+       "pmg_mg_levels_ksp_monitor": None,
+       "pmg_mg_levels_ksp_norm_type": "unpreconditioned",
+       "pmg_mg_levels_": {
+           "pc_type": "python",
+           "pc_python_type": __name__ + "." + "CellIntegralPC",
+           "assembled": {
+               "pc_type": "jacobi"
+           }
+       },
+       "pmg_coarse_mat_type": "aij",
+       "pmg_mg_coarse": {**{
+           "ksp_type": "cg",
+           "ksp_rtol": 1e-3,
+           "ksp_monitor": None,
+           "ksp_converged_reason": None,
+       },
+           **amg},
+       }
 if args.degree == 1:
     mat_type = "aij"
 else:
     mat_type = "matfree"
-custom_potential_solver={
+custom_potential_solver = {
     "mat_type": mat_type,
     "snes_view": None,
     "snes_monitor": None,
@@ -290,14 +296,14 @@ custom_potential_solver={
     "ksp_type": "cg",
     "ksp_rtol": 1e-2,
     "log_view": None,
-     }
+}
 if args.degree > 2:
     custom_potential_solver = {** custom_potential_solver,
-                                ** pmg}
+                               ** pmg}
     psolver = pmg
 else:
     custom_potential_solver = {** custom_potential_solver,
-                                ** amg}
+                               ** amg}
     psolver = amg
 if args.csolver == "asm":
     if args.degree > 2:
@@ -310,7 +316,7 @@ elif args.csolver == "pmgasm":
     csolver = pmgasm
 
 
-if args.degree >2:
+if args.degree > 2:
     U_field = "1"
     C0_field = "0"
 else:

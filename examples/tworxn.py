@@ -1,6 +1,7 @@
 from firedrake import *
 from echemfem import EchemSolver, RectangleBoundaryLayerMesh
 
+
 class CarbonateSolver(EchemSolver):
     def __init__(self):
         """
@@ -14,16 +15,16 @@ class CarbonateSolver(EchemSolver):
         Ly = 0.1
         Lx = 1.
 
-        mesh = RectangleBoundaryLayerMesh(50,50,Lx,Ly,50,1e-1, Ly_bdlayer = 5e-3, boundary=(3,1,))
+        mesh = RectangleBoundaryLayerMesh(50, 50, Lx, Ly, 50, 1e-1, Ly_bdlayer=5e-3, boundary=(3, 1,))
 
         C_1_inf = 1.
         C_2_inf = Constant(0)
 
         def bulk_reaction(y):
-            yC1=y[0];
-            yC2=y[1];
-            dC1 = -(1.)*(1e3)*yC1*yC2 
-            dC2 = -(2.)*(1e3)*yC1*yC2 
+            yC1 = y[0]
+            yC2 = y[1]
+            dC1 = -(1.)*(1e3)*yC1*yC2
+            dC2 = -(2.)*(1e3)*yC1*yC2
             return [dC1, dC2]
 
         conc_params = []
@@ -37,8 +38,7 @@ class CarbonateSolver(EchemSolver):
                             "bulk": C_2_inf,
                             })
 
-
-        physical_params = {"flow": ["advection","diffusion"],
+        physical_params = {"flow": ["advection", "diffusion"],
                            "bulk reaction": bulk_reaction,
                            }
 
@@ -56,12 +56,12 @@ class CarbonateSolver(EchemSolver):
         self.boundary_markers = {"inlet": (1),
                                  "bulk dirichlet": (4),
                                  "outlet": (2,),
-                                 "neumann": (3,), 
+                                 "neumann": (3,),
                                  }
 
     def set_velocity(self):
         _, y = SpatialCoordinate(self.mesh)
-        self.vel = as_vector([(1.e5)*y,Constant(0)])
+        self.vel = as_vector([(1.e5)*y, Constant(0)])
 
 
 solver = CarbonateSolver()

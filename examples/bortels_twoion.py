@@ -39,8 +39,8 @@ class BortelsSolver(EchemSolver):
             R = physical_params["R"]
             T = physical_params["T"]
             eta = V - U
-            return J0 * (exp(F / R / T * (eta)) -
-                            (C / C_b) * exp(-F / R / T * (eta)))
+            return J0 * (exp(F / R / T * (eta))
+                         - (C / C_b) * exp(-F / R / T * (eta)))
 
         def reaction_cathode(u):
             return reaction(u, Constant(0))
@@ -50,9 +50,9 @@ class BortelsSolver(EchemSolver):
         # will need to make U_app a class member if it needs updating later
 
         echem_params = []
-        
+
         # For Butler-Volmer, the consumption/production is determined by
-        # the applied potential. Stoichiometry is positive. 
+        # the applied potential. Stoichiometry is positive.
         echem_params.append({"reaction": reaction_cathode,
                              "electrons": 2,
                              "stoichiometry": {"Cu": 1},

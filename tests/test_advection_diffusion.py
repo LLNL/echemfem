@@ -2,6 +2,7 @@ import pytest
 from firedrake import *
 from echemfem import EchemSolver
 
+
 class AdvectionDiffusionSolver(EchemSolver):
     def __init__(self, N, D, extruded=False, family="DG"):
         if extruded:
@@ -67,9 +68,9 @@ class AdvectionDiffusionSolver(EchemSolver):
 def test_convergence_low_peclet(extruded=False):
     err_old = 1e6
     if extruded:
-        n=3
+        n = 3
     else:
-        n=5
+        n = 5
     for i in range(n):
         solver = AdvectionDiffusionSolver(2**(i + 1), 1., extruded=extruded)
         solver.setup_solver()
@@ -79,12 +80,13 @@ def test_convergence_low_peclet(extruded=False):
         assert err < 0.29 * err_old
         err_old = err
 
+
 def test_convergence_high_peclet(extruded=False):
     err_old = 1e6
     if extruded:
-        n=3
+        n = 3
     else:
-        n=5
+        n = 5
     for i in range(n):
         solver = AdvectionDiffusionSolver(2**(i + 1), 1e-3, extruded=extruded)
         solver.setup_solver()
@@ -94,12 +96,13 @@ def test_convergence_high_peclet(extruded=False):
         assert err < 0.29 * err_old
         err_old = err
 
+
 def test_convergence_low_peclet_CG(extruded=False):
     err_old = 1e6
     if extruded:
-        n=3
+        n = 3
     else:
-        n=5
+        n = 5
     for i in range(n):
         solver = AdvectionDiffusionSolver(2**(i + 1), 1., extruded=extruded, family="CG")
         solver.setup_solver()
@@ -109,29 +112,34 @@ def test_convergence_low_peclet_CG(extruded=False):
         assert err < 0.29 * err_old
         err_old = err
 
+
 def test_convergence_high_peclet_CG(extruded=False):
     err_old = 1e6
     if extruded:
-        n=2
+        n = 2
     else:
-        n=5
+        n = 5
     for i in range(n):
         solver = AdvectionDiffusionSolver(2**(i + 2), 1./20., extruded=extruded, family="CG")
         solver.setup_solver()
         solver.solve()
         c1, c2 = solver.u.subfunctions
         err = errornorm(solver.C1ex, c1) + errornorm(solver.C2ex, c2)
-        assert err < 0.62 * err_old #CG not enough here
+        assert err < 0.62 * err_old  # CG not enough here
         err_old = err
+
 
 def test_convergence_low_peclet_extruded():
     test_convergence_low_peclet(extruded=True)
-    
+
+
 def test_convergence_high_peclet_extruded():
     test_convergence_high_peclet(extruded=True)
 
+
 def test_convergence_low_peclet_extruded_CG():
     test_convergence_low_peclet_CG(extruded=True)
-    
+
+
 def test_convergence_high_peclet_extruded_CG():
     test_convergence_high_peclet_CG(extruded=True)

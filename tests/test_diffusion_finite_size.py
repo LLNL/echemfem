@@ -24,18 +24,18 @@ class DiffusionSolver(EchemSolver):
         conc_params.append({"name": "C1",
                             "diffusion coefficient": 1.0,
                             "bulk": C1ex,
-                            "solvated diameter": 1.0 # m
+                            "solvated diameter": 1.0  # m
                             })
 
         conc_params.append({"name": "C2",
                             "diffusion coefficient": 1.0,
                             "bulk": C2ex,
-                            "solvated diameter": 1.0 # m
+                            "solvated diameter": 1.0  # m
                             })
         physical_params = {"flow": ["diffusion", "finite size"],
                            "vacuum permittivity": 1.0,  # F/m
                            "relative permittivity": 1.0,
-                           "Avogadro constant": 1.0, #1/mol
+                           "Avogadro constant": 1.0,  # 1/mol
                            "bulk reaction": f,
                            }
 
@@ -45,9 +45,11 @@ class DiffusionSolver(EchemSolver):
         self.boundary_markers = {"bulk dirichlet": (1, 2, 3, 4),
                                  }
 
+
 def test_DG_error():
     with pytest.raises(NotImplementedError):
         solver = DiffusionSolver(2, family="DG")
+
 
 def test_convergence_CG():
     err_old = 1e6

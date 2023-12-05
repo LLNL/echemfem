@@ -89,10 +89,11 @@ def test_convergence_high_peclet():
         c1, U = solver.u.subfunctions
         errC = errornorm(solver.C1ex, c1)
         errU = errornorm(solver.Uex, U)
-        assert errC < 0.36 * errC_old # p+1/2 convergence
+        assert errC < 0.36 * errC_old  # p+1/2 convergence
         assert errU < 0.26 * errU_old
         errC_old = errC
         errU_old = errU
+
 
 def test_convergence_low_peclet_CG():
     errC_old = 1e6
@@ -124,4 +125,3 @@ def test_convergence_high_peclet_CG():
         assert errU < 0.51 * errU_old
         errC_old = errC
         errU_old = errU
-

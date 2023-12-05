@@ -6,7 +6,7 @@ flows = [["electroneutrality"],
          ["poisson", "migration", "electroneutrality"],
          ["poisson", "migration", "electroneutrality full"],
          ["migration"]
-        ]
+         ]
 
 
 class Solver(EchemSolver):
@@ -22,10 +22,12 @@ class Solver(EchemSolver):
     def set_boundary_markers(self):
         self.boundary_markers = {}
 
+
 def _test_flow(flow):
-    #with pytest.raises(NotImplementedError):
+    # with pytest.raises(NotImplementedError):
     #    solver = Solver(flow)
     solver = Solver(flow)
+
 
 def test_flows():
     for flow in flows:
@@ -33,5 +35,6 @@ def test_flows():
             _test_flow(flow)
         except NotImplementedError as e:
             print(e)
+
 
 test_flows()

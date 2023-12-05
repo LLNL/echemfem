@@ -80,6 +80,7 @@ def test_convergence():
         errC2_old = errC2
         errU_old = errU
 
+
 def test_convergence_CG():
     errC1_old = 1e6
     errC2_old = 1e6
@@ -95,11 +96,7 @@ def test_convergence_CG():
         assert errC1 < 0.26 * errC1_old
         assert errC2 < 0.26 * errC2_old
         assert errU < 0.26 * errU_old
-        #print(errC1/errC1_old)
-        #print(errC2/errC2_old)
-        #print(errU/errU_old)
         errC1_old = errC1
         errC2_old = errC2
         errU_old = errU
 
-test_convergence_CG()

@@ -38,6 +38,7 @@ class DiffusionSolver(EchemSolver):
         self.boundary_markers = {"bulk dirichlet": (1, 2, 3, 4),
                                  }
 
+
 def test_convergence():
     err_old = 1e6
     for i in range(5):
@@ -48,6 +49,7 @@ def test_convergence():
         err = errornorm(solver.C1ex, c1) + errornorm(solver.C2ex, c2)
         assert err < 0.29 * err_old
         err_old = err
+
 
 def test_convergence_CG():
     err_old = 1e6

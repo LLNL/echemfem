@@ -16,7 +16,6 @@ class DiffusionMigrationSolver(EchemSolver):
         self.C2ex = C2ex
         self.Uex = Uex
 
-
         D1 = 0.5
         D2 = 1.0
         z1 = 2.0
@@ -57,6 +56,7 @@ class DiffusionMigrationSolver(EchemSolver):
                                  "applied": (1, 2, 3, 4,),
                                  }
 
+
 def test_convergence():
     errC_old = 1e6
     errU_old = 1e6
@@ -72,6 +72,7 @@ def test_convergence():
         errC_old = errC
         errU_old = errU
 
+
 def test_convergence_CG():
     errC_old = 1e6
     errU_old = 1e6
@@ -86,5 +87,6 @@ def test_convergence_CG():
         assert errU < 0.26 * errU_old
         errC_old = errC
         errU_old = errU
+
 
 test_convergence_CG()

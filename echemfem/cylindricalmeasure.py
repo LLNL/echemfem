@@ -8,10 +8,12 @@ from ufl.checks import is_true_ufl_scalar
 from ufl.constantvalue import as_ufl
 from ufl.domain import extract_domains
 
+
 class CylindricalMeasure(Measure):
     def __init__(self, radius, *args, **kwargs):
         self.radius = radius
         super().__init__(*args, **kwargs)
+
     def __rmul__(self, integrand):
         """Multiply a scalar expression with measure to construct a form with
         a single integral.
@@ -75,6 +77,7 @@ class CylindricalMeasure(Measure):
                             metadata=self.metadata(),
                             subdomain_data=self.subdomain_data())
         return Form([integral])
+
     def reconstruct(self,
                     integral_type=None,
                     subdomain_id=None,
@@ -90,5 +93,5 @@ class CylindricalMeasure(Measure):
         if subdomain_data is None:
             subdomain_data = self.subdomain_data()
         return CylindricalMeasure(self.radius, self.integral_type(),
-                       domain=domain, subdomain_id=subdomain_id,
-                       metadata=metadata, subdomain_data=subdomain_data)
+                                  domain=domain, subdomain_id=subdomain_id,
+                                  metadata=metadata, subdomain_data=subdomain_data)

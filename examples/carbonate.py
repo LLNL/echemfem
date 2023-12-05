@@ -14,6 +14,7 @@ class CarbonateSolver(EchemSolver):
     inter-conversion in pH-buffered seawater systems. Marine chemistry,
     100(1-2), pp.53-65.
     """
+
     def __init__(self):
 
         delta = 0.0001
@@ -97,7 +98,7 @@ class CarbonateSolver(EchemSolver):
         cefH2 = 0.40
         if name == "CO2":
             print(-(j / F) * (cefHCOO / zeffHCOO + cefCO / zeffCO
-                               + cefCH4 / zeffCH4 + 2 * cefC2H4 / zeffC2H4))
+                              + cefCH4 / zeffCH4 + 2 * cefC2H4 / zeffC2H4))
             return -(j / F) * (cefHCOO / zeffHCOO + cefCO / zeffCO
                                + cefCH4 / zeffCH4 + 2 * cefC2H4 / zeffC2H4)
         if name == "OH":
@@ -109,6 +110,7 @@ class CarbonateSolver(EchemSolver):
         self.boundary_markers = {"bulk dirichlet": (1,),  # U_solid = U_app, C = C_0
                                  "neumann": (2,),
                                  }
+
 
 solver = CarbonateSolver()
 solver.setup_solver()
@@ -132,23 +134,23 @@ ax4 = fig.add_subplot(spec[1, 1])
 ax5 = fig.add_subplot(spec[0, 2])
 ax6 = fig.add_subplot(spec[1, 2])
 
-plot(C_CO2, axes = ax1)
-ax1.set(xlabel = 'distance (m)',
-        ylabel = 'CO$_2$ concentration (M)')
-plot(C_HCO3, axes = ax2)
-ax2.set(xlabel = 'distance (m)',
-        ylabel = 'HCO$_3$ concentration (M)')
-plot(C_CO3, axes = ax3)
-ax3.set(xlabel = 'distance (m)',
-        ylabel = 'CO$_3$ concentration (M)')
-plot(C_OH, axes = ax4)
-ax4.set(xlabel = 'distance (m)',
-        ylabel = 'OH concentration (M)')
-plot(C_H, axes = ax5)
-ax5.set(xlabel = 'distance (m)',
-        ylabel = 'H concentration (M)')
-plt.plot(x_bl, C_OH_bl, axes = ax6, color='k', linewidth=2)
-ax6.set(xlabel = 'distance (m)',
-        ylabel = 'OH concentration (M)')
+plot(C_CO2, axes=ax1)
+ax1.set(xlabel='distance (m)',
+        ylabel='CO$_2$ concentration (M)')
+plot(C_HCO3, axes=ax2)
+ax2.set(xlabel='distance (m)',
+        ylabel='HCO$_3$ concentration (M)')
+plot(C_CO3, axes=ax3)
+ax3.set(xlabel='distance (m)',
+        ylabel='CO$_3$ concentration (M)')
+plot(C_OH, axes=ax4)
+ax4.set(xlabel='distance (m)',
+        ylabel='OH concentration (M)')
+plot(C_H, axes=ax5)
+ax5.set(xlabel='distance (m)',
+        ylabel='H concentration (M)')
+plt.plot(x_bl, C_OH_bl, axes=ax6, color='k', linewidth=2)
+ax6.set(xlabel='distance (m)',
+        ylabel='OH concentration (M)')
 
 plt.savefig(filename)

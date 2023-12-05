@@ -9,7 +9,7 @@ ACS Energy Letters 2021 6 (10), 3600-3606
 """
 # operating conditions
 T = 293.15             # temperature (K)
-Vcell = Constant(-0.0) # potential (V)
+Vcell = Constant(-0.0)  # potential (V)
 
 # physical constants
 R = 8.3144598       # ideal gas constant (J/mol/K)
@@ -22,17 +22,17 @@ U0CO2RR = -0.11   # standard potential (V)
 
 # HER
 i0HER = 1.16e-6 * 10  # exchange current density (A/m2)
-alphacHER = 0.36     # cathode coefficient 
+alphacHER = 0.36     # cathode coefficient
 U0HER = 0.0         # standard potential (V)
 
 # bulk reaction
-k2 = 2.19e3 * 1e-3 # m^3/mol/s
+k2 = 2.19e3 * 1e-3  # m^3/mol/s
 
 # electrolyte properties
 cref = 1e3          # reference concentration (mol/m3)
 
 # diffusion coefficients (m2/s)
-# [CO2 OH- CO32 K+ CO H2]	
+# [CO2 OH- CO32 K+ CO H2]
 D = [1.910e-9, 5.29e-9, 0.92e-9, 1.96e-9, 2.03e-9, 4.5e-9]
 
 # charges
@@ -40,7 +40,7 @@ z = [0, -1, -2, 1, 0, 0]
 
 # Bulk Electrolyte concentrations
 cKb = 1000                # mol/m3
-c0OHb = 1000 
+c0OHb = 1000
 c0CO3b = 0.
 c0CO2b = 0.
 c0COb = 0.
@@ -49,6 +49,7 @@ cb = np.array([c0CO2b, c0OHb, c0CO3b, cKb, c0COb, c0H2b])
 H_CO2 = 0.015e3
 H_H2 = 0.
 H_CO = 0.
+
 
 class PorousSolver(EchemSolver):
     def __init__(self):
@@ -68,10 +69,9 @@ class PorousSolver(EchemSolver):
             rxns[i_CO3] = rCO3
             return rxns
 
-
-        mesh = RectangleMesh(100,500, 2e-6, 10e-6,quadrilateral=True)
-        _,Z = SpatialCoordinate(mesh)
-        active = conditional(le(Z,5e-6), 1. , 0.)
+        mesh = RectangleMesh(100, 500, 2e-6, 10e-6, quadrilateral=True)
+        _, Z = SpatialCoordinate(mesh)
+        active = conditional(le(Z, 5e-6), 1., 0.)
         conc_params = []
 
         conc_params.append({"name": "CO2",
@@ -142,16 +142,16 @@ class PorousSolver(EchemSolver):
 
         echem_params.append({"reaction": reaction_CO2RR,
                              "electrons": 2,
-                             "stoichiometry": {"CO2": -1, # reactant
+                             "stoichiometry": {"CO2": -1,  # reactant
                                                "OH": 2,
-                                               "CO": 1}, # product
+                                               "CO": 1},  # product
                              "boundary": "catalyst",
                              })
 
         echem_params.append({"reaction": reaction_HER,
                              "electrons": 2,
                              "stoichiometry": {"OH": 2,
-                                               "H2": 1}, # product
+                                               "H2": 1},  # product
                              "boundary": "catalyst",
                              })
 
@@ -160,9 +160,10 @@ class PorousSolver(EchemSolver):
     def set_boundary_markers(self):
         self.boundary_markers = {"gas": (3,),  # C = C_gas
                                  "bulk": (4,),  # V = 0
-                                 "bulk dirichlet": (4,), # C = C_bulk
-                                 "catalyst": (2,), # CO2R
+                                 "bulk dirichlet": (4,),  # C = C_bulk
+                                 "catalyst": (2,),  # CO2R
                                  }
+
 
 solver = PorousSolver()
 solver.setup_solver(initial_solve=False)
@@ -171,12 +172,16 @@ solver.solve()
 
 # getting active region
 _, Z = SpatialCoordinate(solver.mesh)
-active = conditional(le(Z,5e-6), 1. , 0.)
+active = conditional(le(Z, 5e-6), 1., 0.)
+
+
 def get_boundary_dofs(V, i):
     u = Function(V)
     bc = DirichletBC(V, active, i)
     bc.apply(u)
-    return np.where(u.vector()[:]==1)
+    return np.where(u.vector()[:] == 1)
+
+
 dofs = get_boundary_dofs(solver.V, 2)
 Z_cat = Function(solver.V).interpolate(Z).dat.data[dofs]
 
@@ -186,7 +191,7 @@ for Vs in Vlist:
     solver.U_app.assign(Vs)
     print("V = %d mV" % np.rint(Vs * 1000))
     solver.solve()
-    # [CO2 OH- CO32- CO H2]	
+    # [CO2 OH- CO32- CO H2]
     cCO2, cOH, cCO3, cCO, cH2, phi2 = solver.u.subfunctions
     cK = Function(solver.V).assign(2 * cCO3 + cOH)
 

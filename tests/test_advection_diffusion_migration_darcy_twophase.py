@@ -17,7 +17,7 @@ class AdvectionDiffusionMigrationSolver(EchemSolver):
         U2ex = sin(x) + cos(y) + 3
         pex = (0.5 * cos(x) + sin(y) + 2) * vavg
         pgex = pex
-        #pgex = cos(x) + 0.5 * sin(y) + 3
+        # pgex = cos(x) + 0.5 * sin(y) + 3
         Sex = self.saturation(pex, pgex)
         krl = self.relative_permeability(Sex)
         krg = self.relative_permeability(1 - Sex)

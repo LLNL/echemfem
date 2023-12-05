@@ -9,6 +9,7 @@ class GuptaSolver(EchemSolver):
     cathode surface concentrations in the electrochemical reduction of CO2 in
     KHCO3 solutions. Journal of applied electrochemistry, 36(2), pp.161-172.
     """
+
     def __init__(self):
 
         delta = 0.0001
@@ -58,7 +59,7 @@ class GuptaSolver(EchemSolver):
                            "bulk reaction": bulk_reaction,
                            }
 
-        super().__init__(conc_params, physical_params, mesh, family = "CG")
+        super().__init__(conc_params, physical_params, mesh, family="CG")
 
     def neumann(self, C, conc_params, u):
         name = conc_params["name"]
@@ -89,6 +90,7 @@ class GuptaSolver(EchemSolver):
                                  "neumann": (2,),
                                  }
 
+
 solver = GuptaSolver()
 solver.setup_solver()
 solver.solve()
@@ -110,20 +112,20 @@ ax3 = fig.add_subplot(spec[1, 0])
 ax4 = fig.add_subplot(spec[1, 1])
 ax5 = fig.add_subplot(spec[1, 2])
 
-plot(C_CO2, axes = ax1)
-ax1.set(xlabel = 'distance (m)',
-        ylabel = 'CO$_2$ concentration (M)')
-plot(C_HCO3, axes = ax2)
-ax2.set(xlabel = 'distance (m)',
-        ylabel = 'HCO$_3$ concentration (M)')
-plot(C_CO3, axes = ax3)
-ax3.set(xlabel = 'distance (m)',
-        ylabel = 'CO$_3$ concentration (M)')
-plot(C_OH, axes = ax4)
-ax4.set(xlabel = 'distance (m)',
-        ylabel = 'OH concentration (M)')
-plt.plot(x_bl, C_OH_bl, axes = ax5, color='k', linewidth=2)
-ax5.set(xlabel = 'distance (m)',
-        ylabel = 'OH concentration (M)')
+plot(C_CO2, axes=ax1)
+ax1.set(xlabel='distance (m)',
+        ylabel='CO$_2$ concentration (M)')
+plot(C_HCO3, axes=ax2)
+ax2.set(xlabel='distance (m)',
+        ylabel='HCO$_3$ concentration (M)')
+plot(C_CO3, axes=ax3)
+ax3.set(xlabel='distance (m)',
+        ylabel='CO$_3$ concentration (M)')
+plot(C_OH, axes=ax4)
+ax4.set(xlabel='distance (m)',
+        ylabel='OH concentration (M)')
+plt.plot(x_bl, C_OH_bl, axes=ax5, color='k', linewidth=2)
+ax5.set(xlabel='distance (m)',
+        ylabel='OH concentration (M)')
 
 plt.savefig(filename)

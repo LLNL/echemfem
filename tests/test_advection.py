@@ -76,6 +76,6 @@ def test_convergence(extruded=False):
         assert err < 0.26 * err_old
         err_old = err
 
+
 def test_convergence_extruded():
     test_convergence(extruded=True)
-

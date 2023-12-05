@@ -88,4 +88,3 @@ def test_convergence():
             + errornorm(solver.Uex, U1) + errornorm(solver.U2ex, U2)
         assert err < 0.29 * err_old
         err_old = err
-

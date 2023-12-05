@@ -1,6 +1,7 @@
 from firedrake import *
 from echemfem import EchemSolver
 
+
 class CarbonateSolver(EchemSolver):
     def __init__(self):
         """
@@ -10,9 +11,9 @@ class CarbonateSolver(EchemSolver):
         Reactors. Industrial & Engineering Chemistry Research, 60(31),
         pp.11824-11833.
         """
-        
-        Ly = 1e-3#.6e-3 # m
-        Lx = 1e-2 # m
+
+        Ly = 1e-3  # .6e-3 # m
+        Lx = 1e-2  # m
 
         mesh = RectangleMesh(200, 100, Lx, Ly, quadrilateral=True)
 
@@ -37,48 +38,47 @@ class CarbonateSolver(EchemSolver):
         C_5_inf = (k5r/k5f)/C_2_inf
 
         def bulk_reaction(y):
-            yCO2=y[0];
-            yOH=y[1];
-            yHCO3=y[2];
-            yCO3=y[3];
-            yH=y[4];
-            
-            
-            dCO2 = -(k1f)   *yCO2*yOH \
-                    +(k1r)    *yHCO3 \
-                    -(k2f)  *yCO2 \
-                    +(k2r)   *yHCO3*yH
+            yCO2 = y[0]
+            yOH = y[1]
+            yHCO3 = y[2]
+            yCO3 = y[3]
+            yH = y[4]
 
-            dOH = -(k1f)       *yCO2*yOH \
-                           +(k1r)        *yHCO3 \
-                           +(k3f)        *yCO3 \
-                           -(k3r)       *yOH*yHCO3\
-                           -(k5f)      *yOH*yH\
-                           +(k5r)
+            dCO2 = -(k1f) * yCO2*yOH \
+                + (k1r) * yHCO3 \
+                - (k2f) * yCO2 \
+                + (k2r) * yHCO3*yH
 
-            dHCO3 = (k1f)        *yCO2*yOH\
-                           -(k1r)       *yHCO3\
-                           +(k3f)        *yCO3\
-                           -(k3r)       *yOH*yHCO3\
-                           +(k2f)       *yCO2 \
-                           -(k2r)      *yHCO3*yH \
-                           +(k4f)       *yCO3*yH\
-                           -(k4r)      *yHCO3
+            dOH = -(k1f) * yCO2*yOH \
+                + (k1r) * yHCO3 \
+                + (k3f) * yCO3 \
+                - (k3r) * yOH*yHCO3\
+                - (k5f) * yOH*yH\
+                + (k5r)
 
-            dCO3 = -(k3f) *yCO3 \
-                           +(k3r)  *yOH*yHCO3\
-                           -(k4f)*yCO3*yH\
-                           +(k4r) *yHCO3
+            dHCO3 = (k1f) * yCO2*yOH\
+                - (k1r) * yHCO3\
+                + (k3f) * yCO3\
+                - (k3r) * yOH*yHCO3\
+                + (k2f) * yCO2 \
+                - (k2r) * yHCO3*yH \
+                + (k4f) * yCO3*yH\
+                - (k4r) * yHCO3
 
-            dH = (k2f)   *yCO2 \
-                           -(k2r)  *yHCO3*yH \
-                           -(k4f)  *yCO3*yH\
-                           +(k4r)   *yHCO3\
-                           -(k5f)  *yOH*yH\
-                           +(k5r)
-               
-            return [dCO2, dOH, dHCO3, dCO3, dH]#, 0.]
-        
+            dCO3 = -(k3f) * yCO3 \
+                + (k3r) * yOH*yHCO3\
+                - (k4f)*yCO3*yH\
+                + (k4r) * yHCO3
+
+            dH = (k2f) * yCO2 \
+                - (k2r) * yHCO3*yH \
+                - (k4f) * yCO3*yH\
+                + (k4r) * yHCO3\
+                - (k5f) * yOH*yH\
+                + (k5r)
+
+            return [dCO2, dOH, dHCO3, dCO3, dH]  # , 0.]
+
         C_CO2_bulk = C_1_inf
         C_OH_bulk = C_2_inf
         C_HCO3_bulk = C_3_inf
@@ -108,19 +108,17 @@ class CarbonateSolver(EchemSolver):
                             "bulk": C_CO32_bulk,  # mol/m3
                             })
 
-
         conc_params.append({"name": "H",
                             "diffusion coefficient": 9.311E-9,  # m^2/s
                             "bulk": C_H_bulk,  # mol/m3
                             })
 
-        #conc_params.append({"name": "K",
+        # conc_params.append({"name": "K",
         #                    "diffusion coefficient": 1.96E-9,  # m^2/s
         #                    "bulk": C_K_bulk,  # mol/m3
         #                    })
 
-
-        physical_params = {"flow": ["advection","diffusion"],
+        physical_params = {"flow": ["advection", "diffusion"],
                            "bulk reaction": bulk_reaction,
                            }
 
@@ -136,17 +134,17 @@ class CarbonateSolver(EchemSolver):
         if name == "OH":
             return 2*(1.91E-1)*u[0]
 
-
     def set_boundary_markers(self):
         self.boundary_markers = {"inlet": (1),
                                  "bulk dirichlet": (4),
                                  "outlet": (2,),
-                                 "neumann": (3,), 
+                                 "neumann": (3,),
                                  }
 
     def set_velocity(self):
         _, y = SpatialCoordinate(self.mesh)
-        self.vel = as_vector([1.91*y,Constant(0)]) # m/s
+        self.vel = as_vector([1.91*y, Constant(0)])  # m/s
+
 
 solver = CarbonateSolver()
 solver.setup_solver()

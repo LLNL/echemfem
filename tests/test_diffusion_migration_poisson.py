@@ -24,7 +24,7 @@ class DiffusionMigrationSolver(EchemSolver):
             K = 2e-1
             f1 = div((- D1 * z1 * grad(Uex)) * C1ex) - div(D1 * grad(C1ex))
             f2 = div((- D2 * z2 * grad(Uex)) * C2ex) - div(D2 * grad(C2ex))
-            #f3 = div(( - D1 * z1**2 * grad(Uex)) * C1ex) + div(( - D2 * z2**2 * grad(Uex)) * C2ex)
+            # f3 = div(( - D1 * z1**2 * grad(Uex)) * C1ex) + div(( - D2 * z2**2 * grad(Uex)) * C2ex)
             f3 = div((-K * grad(Uex))) - z1 * C1ex - z2 * C2ex
             return [f1, f2, f3]
 
@@ -55,6 +55,7 @@ class DiffusionMigrationSolver(EchemSolver):
         self.boundary_markers = {"bulk dirichlet": (1, 2, 3, 4,),
                                  "applied": (1, 2, 3, 4,),
                                  }
+
 
 def test_convergence():
     errC1_old = 1e6
@@ -94,5 +95,6 @@ def test_convergence_CG():
         errC1_old = errC1
         errC2_old = errC2
         errU_old = errU
+
 
 test_convergence_CG()

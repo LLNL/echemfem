@@ -3,7 +3,6 @@ from firedrake import *
 from echemfem import EchemSolver
 
 
-
 class AdvectionDiffusionSolver(EchemSolver):
     def __init__(self, N, D, extruded=False):
         if extruded:
@@ -66,13 +65,12 @@ class AdvectionDiffusionSolver(EchemSolver):
                 (x_vel, Constant(0.)))
 
 
-
 def test_convergence_low_peclet_CG(extruded=False):
     err_old = 1e6
     if extruded:
-        n=3
+        n = 3
     else:
-        n=5
+        n = 5
     for i in range(n):
         solver = AdvectionDiffusionSolver(2**(i + 1), 1., extruded=extruded)
         solver.setup_solver(initial_guess=False)
@@ -82,12 +80,13 @@ def test_convergence_low_peclet_CG(extruded=False):
         assert err < 0.26 * err_old
         err_old = err
 
+
 def test_convergence_high_peclet_CG(extruded=False):
     err_old = 1e6
     if extruded:
-        n=3
+        n = 3
     else:
-        n=5
+        n = 5
     for i in range(n):
         solver = AdvectionDiffusionSolver(2**(i + 2), 1e-4, extruded=extruded)
         solver.setup_solver(initial_guess=False)
@@ -100,8 +99,7 @@ def test_convergence_high_peclet_CG(extruded=False):
 
 def test_convergence_low_peclet_extruded_CG():
     test_convergence_low_peclet_CG(extruded=True)
-    
+
+
 def test_convergence_high_peclet_extruded_CG():
     test_convergence_high_peclet_CG(extruded=True)
-
-

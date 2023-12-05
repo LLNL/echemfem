@@ -7,7 +7,7 @@ __all__ = ['IntervalBoundaryLayerMesh', 'RectangleBoundaryLayerMesh']
 
 
 def IntervalBoundaryLayerMesh(ncells, length_or_left, ncells_bdlayer, length_bdlayer,
-        boundary = (2,), right=None, distribution_parameters=None, comm=COMM_WORLD):
+                              boundary=(2,), right=None, distribution_parameters=None, comm=COMM_WORLD):
     """
     Generate a boundary layer mesh of an interval.
 
@@ -73,7 +73,7 @@ def IntervalBoundaryLayerMesh(ncells, length_or_left, ncells_bdlayer, length_bdl
 
 
 def RectangleBoundaryLayerMesh(nx, ny, Lx, Ly, n_bdlayer, L_bdlayer, Ly_bdlayer=None, ny_bdlayer=None,
-                  boundary = (1,), reorder=None, distribution_parameters=None, comm=COMM_WORLD):
+                               boundary=(1,), reorder=None, distribution_parameters=None, comm=COMM_WORLD):
     """Generate a boundary layer rectangular mesh using quadrilateral elements
 
     :arg nx: The number of cells in the x direction outside the boundary layers
@@ -193,4 +193,3 @@ def RectangleBoundaryLayerMesh(nx, ny, Lx, Ly, n_bdlayer, L_bdlayer, Ly_bdlayer=
                 plex.setLabelValue(dmcommon.FACE_SETS_LABEL, face, 4)
 
     return mesh.Mesh(plex, reorder=reorder, distribution_parameters=distribution_parameters, comm=comm)
-

@@ -1,4 +1,4 @@
-#import matplotlib.gridspec as gridspec
+# import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 from firedrake import *
 from echemfem import EchemSolver
@@ -13,7 +13,7 @@ electrolysis through active electrode area. Chem Catalysis. 2022 Oct 12.
 # operating conditions
 T = 293.15             # temperature (K)
 P = 1                  # pressure (atm)
-Vcell = Constant(-0.7) # potential (V)
+Vcell = Constant(-0.7)  # potential (V)
 S = 0.64               # saturation
 
 # catalyst layer properties
@@ -35,7 +35,7 @@ U0CO2RR = 0.023257   # standard potential (V)
 
 # HER
 i0HER = 6.16e-7  # exchange current density (A/m2)
-alphacHER = 0.6     # cathode coefficient 
+alphacHER = 0.6     # cathode coefficient
 U0HER = 0.0         # standard potential (V)
 
 # electrolyte properties
@@ -48,22 +48,22 @@ rhol = 1000         # electrolyte density (kg/m3)
 nul = ql / Aelec    # electrolyte flow velocity (m/s)
 
 # diffusion coefficients (m2/s)
-# [CO2 OH- H+ CO32- HCO3- K+]	
-D = [1.910e-9, 1.185e-9, 9.311e-9, 0.923e-9, 1.185e-9, 1.957e-9]	
+# [CO2 OH- H+ CO32- HCO3- K+]
+D = [1.910e-9, 1.185e-9, 9.311e-9, 0.923e-9, 1.185e-9, 1.957e-9]
 
 # mass transfer coefficients
 kMT = []
 for Di in D:
-    kMT.append(0.664 * (Di / Lelec) * pow((rhol * nul * Lelec) / mul, 0.5) *
-                 pow(mul / (rhol * Di), 1 / 3))
+    kMT.append(0.664 * (Di / Lelec) * pow((rhol * nul * Lelec) / mul, 0.5)
+               * pow(mul / (rhol * Di), 1 / 3))
 
 # charge of each species
 z = [0, -1, 1, -2, -1, 1]
 
 # equilibrium coefficients
 Kw = 1e-8           # mol^2/m^6
-K1 = pow(10,-3.37)  # mol/m3
-K2 = pow(10,-7.32)  # mol/m3
+K1 = pow(10, -3.37)  # mol/m3
+K2 = pow(10, -7.32)  # mol/m3
 K3 = K1/Kw
 K4 = K2/Kw
 
@@ -84,12 +84,13 @@ kwb = kwf/Kw
 # Bulk Electrolyte concentrations
 pH0 = 7.9
 cKb = 1000                # mol/m3
-c0Hb = pow(10,-pH0+3)     # mol/m3
+c0Hb = pow(10, -pH0+3)     # mol/m3
 c0OHb = Kw/c0Hb
 c0CO3b = cKb/(1+c0Hb/K2+c0Hb**2/(K1*K2))
 c0HCO3b = c0Hb*c0CO3b/K2
 c0CO2b = H_CO2
 cb = np.array([c0CO2b, c0OHb, c0Hb, c0CO3b, c0HCO3b, cKb])
+
 
 class PorousSolver(EchemSolver):
     def __init__(self):
@@ -203,13 +204,13 @@ class PorousSolver(EchemSolver):
 
         echem_params.append({"reaction": reaction_CO2RR,
                              "electrons": 6,
-                             "stoichiometry": {"CO2": -1, # reactant
-                                               "OH": 6}, # product
+                             "stoichiometry": {"CO2": -1,  # reactant
+                                               "OH": 6},  # product
                              })
 
         echem_params.append({"reaction": reaction_HER,
                              "electrons": 2,
-                             "stoichiometry": {"OH": 2}, # product
+                             "stoichiometry": {"OH": 2},  # product
                              })
 
         super().__init__(conc_params, physical_params, mesh, echem_params=echem_params, family="CG", p=2)
@@ -223,9 +224,9 @@ class PorousSolver(EchemSolver):
 
 solver = PorousSolver()
 solver.setup_solver(initial_solve=False)
-#from IPython import embed; embed()
+# from IPython import embed; embed()
 Vlist = np.linspace(-0.70, -1.5, num=41)
-#Vlist = [-0.7]
+# Vlist = [-0.7]
 sol = []
 icell = []
 V = solver.V
@@ -240,25 +241,25 @@ for Vs in Vlist:
 
     i1 = Function(V).interpolate(-solver.effective_diffusion(sigma_CL, phase="solid") * grad(phi1)[0])
 
-    NCO2 = Function(V).interpolate( solver.effective_diffusion( D[0]) *
-            grad(cCO2)[0])
-    NOH = Function(V).interpolate((solver.effective_diffusion( D[1]) *
-            grad(cOH) + F * z[1] * D[1] / R / T * cOH * grad(phi2))[0])
-    NH = Function(V).interpolate((solver.effective_diffusion(D[2]) *
-            grad(cH) + F * z[2] * solver.effective_diffusion(D[2]) / R / T * cH
-            * grad(phi2))[0])
-    NCO3 = Function(V).interpolate((solver.effective_diffusion(D[3]) *
-            grad(cCO3) + F * z[3] * solver.effective_diffusion(D[3]) / R / T *
-            cCO3 * grad(phi2))[0])
-    NHCO3 = Function(V).interpolate((solver.effective_diffusion(D[4]) *
-            grad(cHCO3) + F * z[4] * solver.effective_diffusion(D[4]) / R / T *
-            cHCO3 * grad(phi2))[0])
-    NK = Function(V).interpolate((solver.effective_diffusion(D[5]) *
-            grad(cK) + F * z[5] * solver.effective_diffusion(D[5])/ R / T * cK
-            * grad(phi2))[0])
+    NCO2 = Function(V).interpolate(solver.effective_diffusion(D[0])
+                                   * grad(cCO2)[0])
+    NOH = Function(V).interpolate((solver.effective_diffusion(D[1])
+                                   * grad(cOH) + F * z[1] * D[1] / R / T * cOH * grad(phi2))[0])
+    NH = Function(V).interpolate((solver.effective_diffusion(D[2])
+                                  * grad(cH) + F * z[2] * solver.effective_diffusion(D[2]) / R / T * cH
+                                  * grad(phi2))[0])
+    NCO3 = Function(V).interpolate((solver.effective_diffusion(D[3])
+                                    * grad(cCO3) + F * z[3] * solver.effective_diffusion(D[3]) / R / T
+                                    * cCO3 * grad(phi2))[0])
+    NHCO3 = Function(V).interpolate((solver.effective_diffusion(D[4])
+                                     * grad(cHCO3) + F * z[4] * solver.effective_diffusion(D[4]) / R / T
+                                     * cHCO3 * grad(phi2))[0])
+    NK = Function(V).interpolate((solver.effective_diffusion(D[5])
+                                  * grad(cK) + F * z[5] * solver.effective_diffusion(D[5]) / R / T * cK
+                                  * grad(phi2))[0])
 
-    i2 = Function(V).assign(- F * (z[5] * NK + z[2] * NH + z[4] * NHCO3 +
-              z[1] * NOH + z[3] * NCO3 + z[0] * NCO2))
+    i2 = Function(V).assign(- F * (z[5] * NK + z[2] * NH + z[4] * NHCO3
+                                   + z[1] * NOH + z[3] * NCO3 + z[0] * NCO2))
 
     fig = plt.figure(constrained_layout=True, figsize=(8, 6))
     spec = gridspec.GridSpec(ncols=2, nrows=2, figure=fig)
@@ -267,22 +268,22 @@ for Vs in Vlist:
     ax3 = fig.add_subplot(spec[1, 0])
     ax4 = fig.add_subplot(spec[1, 1])
 
-    plot(i1, label="$i_s$", axes = ax1)
-    plot(i2, label="$i_l$", axes = ax1, color='b')
+    plot(i1, label="$i_s$", axes=ax1)
+    plot(i2, label="$i_l$", axes=ax1, color='b')
     ax1.legend()
     ax1.set(xlabel='catalyst layer distance (m)',
             ylabel='current density (A/m$^2$)')
 
-    plot(phi1, label="$\phi_s$", axes = ax2)
-    plot(phi2, label="$\phi_l$", axes = ax2, color = 'b')
+    plot(phi1, label="$\phi_s$", axes=ax2)
+    plot(phi2, label="$\phi_l$", axes=ax2, color='b')
     ax2.legend()
     ax2.set(xlabel='catalyst layer distance (m)', ylabel='potential (V)')
 
-    plot(cCO2, axes = ax3)
+    plot(cCO2, axes=ax3)
     ax3.set(xlabel='catalyst layer distance (m)',
             ylabel='CO$_2$ concentration (mol/m$^3$)')
 
-    plot(NCO2, axes = ax4)
+    plot(NCO2, axes=ax4)
     ax4.set(xlabel='catalyst layer distance (m)',
             ylabel='CO$_2$ flux (mol/m$^2$/s)')
     filename = "results/current%dmV.png" % (-Vs * 1000)
@@ -297,33 +298,31 @@ for Vs in Vlist:
     ax5 = fig.add_subplot(spec[1, 1])
     ax6 = fig.add_subplot(spec[1, 2])
 
-    plot(cK, axes = ax1)
+    plot(cK, axes=ax1)
     ax1.set(xlabel='catalyst layer distance (m)',
             ylabel='K$^+$ concentration (mol/m$^3$)')
 
-    plot(cH, axes = ax2)
+    plot(cH, axes=ax2)
     ax2.set(xlabel='catalyst layer distance (m)',
             ylabel='H$^+$ concentration (mol/m$^3$)')
 
-    plot(cHCO3, axes = ax3)
+    plot(cHCO3, axes=ax3)
     ax3.set(xlabel='catalyst layer distance (m)',
             ylabel='HCO$_3^-$ concentration (mol/m$^3$)')
 
-    plot(cOH, axes = ax4)
+    plot(cOH, axes=ax4)
     ax4.set(xlabel='catalyst layer distance (m)',
             ylabel='OH$^-$ concentration (mol/m$^3$)')
 
-    plot(cCO3, axes = ax5)
+    plot(cCO3, axes=ax5)
     ax5.set(xlabel='catalyst layer distance (m)',
             ylabel='CO$_3^{2-}$ concentration (mol/m$^3$)')
 
-    plot(cCO2, axes = ax6)
+    plot(cCO2, axes=ax6)
     ax6.set(xlabel='catalyst layer distance (m)',
             ylabel='CO$_2$ concentration (mol/m$^3$)')
     filename = "results/electrolyte%dmV.png" % (-Vs * 1000)
     plt.savefig(filename)
-
-
 
     phi1_ = phi1.vector().dat.data
     phi2_ = phi2.vector().dat.data
@@ -339,12 +338,12 @@ for Vs in Vlist:
 
     Vname = np.rint(-Vs*1000)
     filename = "full_gde_data%dmV.csv" % Vname
-    with open(filename, mode = 'w') as csvfile:
+    with open(filename, mode='w') as csvfile:
         csvwriter = csv.writer(csvfile)
-        csvwriter.writerow(['x','i1','V1','i2','V2','cK','cH','cHCO3','cOH','cCO3','cCO2'])            
-        for i in range(0,len(x_)):
+        csvwriter.writerow(['x', 'i1', 'V1', 'i2', 'V2', 'cK', 'cH', 'cHCO3', 'cOH', 'cCO3', 'cCO2'])
+        for i in range(0, len(x_)):
             j = i
             if j > len(x_)-1:
                 j = len(x_)-1
-            csvwriter.writerow([x_[i],i1_[j],phi1_[i],i2_[j],phi2_[i],cK_[i],cH_[i],cHCO3_[i],cOH_[i],cCO3_[i],cCO2_[i]])
+            csvwriter.writerow([x_[i], i1_[j], phi1_[i], i2_[j], phi2_[i], cK_[i], cH_[i], cHCO3_[i], cOH_[i], cCO3_[i], cCO2_[i]])
     icell.append(i1_[-1])
