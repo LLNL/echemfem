@@ -2645,17 +2645,17 @@ class TransientEchemSolver(EchemSolver):
             Form_, bcs_ = self.transient_forms(us, v, us_old)
             Form += Form_
             bcs += bcs_
-        # Crank-Nicholson would be something like this
+        # Crank-Nicholson would be something like this. Would sometimes need t_old as well 
         elif False:
             Form = 0.0
             Form_, bcs = self.steady_forms(us, v)
             Form += 0.5 * Form_
-            Form_, _ = self.steady_forms(us_old, v)
+            Form_, _ = self.steady_forms(us_old, v) # at t=t_old
             Form += 0.5 * Form_
             Form_, bcs_ = self.transient_forms(us, v, us_old)
             Form += Form_
             bcs += bcs_
-        # Implicit midpoint method would be something like this
+        # Implicit midpoint method would be something like this. Would need t+1/2.
         elif False:
             Form, bcs = self.steady_forms(Form, bcs, (us + us_old)/2, v)
             Form_, bcs_ = self.transient_forms(us, v, us_old)
