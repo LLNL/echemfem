@@ -589,8 +589,6 @@ class EchemSolver(ABC):
 
             if self.flow["porous"] and (
                     self.flow["electroneutrality"] or self.flow["poisson"] or self.flow["electroneutrality full"]):
-                #u.sub(i_Ul).assign(self.U_app)
-                #u.sub(i_Us).assign(Constant(1e-4))
                 u.sub(i_Ul).assign(Constant(0))
                 u.sub(i_Us).assign(self.U_app)
                 if initial_solve:
@@ -642,8 +640,6 @@ class EchemSolver(ABC):
                         bcs=bcs,
                         solver_parameters=self.potential_solver_parameters,
                         options_prefix="echem_potential_initial_guess")
-                    # File("results/liquid_potential0.pvd").write(Function(self.Vu,
-                    # name="Liquid Potential").assign(U0))
                 u.sub(i_Ul).assign(U0)
 
             if self.flow["darcy"] and self.gas_params and self.flow["advection"]:
@@ -668,7 +664,6 @@ class EchemSolver(ABC):
                         p0s[1], v1, self.gas_params[self.num_gas], u=u0, W=Wu, i_bc=1)
                     a0 += a
                     bcs += bc
-                    #a0 += self.gas_pressure_form(p0s[1], v1, self.gas_params, u=u0)
                     pressure_solver_parameters = {"snes_type": "newtonls",
                                                   "snes_linesearch_type": "l2",
                                                   "snes_rtol": 1e-8,
@@ -741,22 +736,18 @@ class EchemSolver(ABC):
             if COMM_WORLD.rank == 0:
                 snes_history, linear_its = solver.snes.getConvergenceHistory()
                 ksp_history = solver.snes.ksp.getConvergenceHistory()
-
+                
+                # some hard-coding for the DG paper
                 data = {
                     "num_processes": comm.size,
                     "num_cells": num_cells,
                     "dimension": 3,
                     "degreeC": self.poly_degree,
                     "degreeU": self.poly_degreeU,
-                    # "solver_parameters": cPickle.dumps(solver.parameters),
-                    # "parameter_name": name,
                     "dofs": self.u.dof_dset.layout_vec.getSize(),
                     "name": "bortels_threeion_extruded_3d_nondim",
                     "snes_its": newton_its,
                     "ksp_its": ksp_its,
-                    # "snes_history": pickle.dumps(snes_history),
-                    # "linear_its": pickle.dumps(linear_its),
-                    # "ksp_history": pickle.dumps(ksp_history),
                     "SNESSolve": snes_time,
                     "KSPSolve": ksp_time,
                     "PCSetUp": pcsetup_time,
@@ -765,7 +756,6 @@ class EchemSolver(ABC):
                     "FunctionEval": residual_time,
                     "mesh_name": self.mesh.name,
                     "csolver": self.csolver,
-                    # "mesh_size": problem.N * (2**ref),
                 }
 
                 if not os.path.exists(os.path.dirname(stats)):
@@ -922,18 +912,6 @@ class EchemSolver(ABC):
             self.potential_solver_parameters = custom_potential_solver
             return
 
-       #  self.potential_solver_parameters = {
-       #      "snes_monitor": None,
-       #      "snes_type": "newtonls",
-       #      "snes_linesearch_type": "l2",
-       #      "snes_rtol": 1e-2,
-       #      "snes_max_it": 20,
-       #      "mat_type": "aij",
-       #      "ksp_monitor": None,
-       #      "ksp_type": "fgmres",
-       #      "ksp_rtol": 1e-4,
-       #      "pc_type": "mg",
-       #  }
         self.potential_solver_parameters = {
             "snes_type": "newtonls",
             "snes_linesearch_type": "l2",
@@ -959,17 +937,10 @@ class EchemSolver(ABC):
 
             if pc_type == "block" or pc_type == "cpr":
                 mg = {"ksp_type": "preonly",
-                      # "ksp_type": "bcgs",
-                      # "ksp_rtol": 1e-6,
-                      # "ksp_type": "richardson",
-                      # "ksp_max_it": 10,
                       "pc_type": "hypre",
-                      # "pc_hypre_boomeramg_max_iter": 5,
                       }
-                # "pc_hypre_boomeramg_max_iter": 10,}
             elif pc_type == "blockgmg" or pc_type == "cprgmg":
-                mg = {  # "ksp_type": "preonly",
-                    "ksp_type": "bcgs",
+                mg = {"ksp_type": "bcgs",
                     "ksp_rtol": 1e-2,
                     "pc_type": "mg",
                     "mg_coarse_ksp_type": "preonly",
@@ -986,11 +957,9 @@ class EchemSolver(ABC):
                       }
             else:
                 raise NotImplementedError('unrecognized preconditioner type')
-            ilu = {  # "ksp_type": "bcgs",
-                # "ksp_rtol": 1e-2,
-                "ksp_type": "preonly",
-                            "pc_type": "bjacobi",
-                            "sub_pc_type": "ilu",
+            ilu = {"ksp_type": "preonly",
+                   "pc_type": "bjacobi",
+                   "sub_pc_type": "ilu",
             }
 
             if self.flow["porous"]:
@@ -1011,23 +980,9 @@ class EchemSolver(ABC):
             C_is = ",".join(is_list)
 
             if self.num_mass == 1:
-                fieldsplit_C = mg  # {#"ksp_type": "bcgs",
-                # "ksp_rtol": 1e-3,
-                # "ksp_type": "preonly",
-                # "pc_type": "bjacobi",
-                # "sub_pc_type": "ilu",
-                # "sub_pc_factor_levels": 1,
-                # }
+                fieldsplit_C = mg
             else:
                 fieldsplit_C = {"ksp_type": "preonly",
-                                # "ksp_type": "fgmres",
-                                # "ksp_rtol": 1e-3,
-                                # "ksp_max_it": 30,
-                                # "ksp_monitor": None,
-                                # "ksp_converged_reason": None,
-                                # "ksp_type": "richardson",
-                                # "ksp_max_it": 50,
-                                # "ksp_monitor": None,
                                 "pc_type": "fieldsplit",
                                 "pc_fieldsplit_type": "multiplicative",
                                 }
@@ -1036,16 +991,12 @@ class EchemSolver(ABC):
         if pc_type.startswith("block"):
             if self.gas_params and self.flow["darcy"] and self.flow["advection"]:
                 fieldsplit_p = {"ksp_type": "preonly",
-                                # "ksp_type": "bcgs",
-                                # "ksp_rtol": 1e-6,
                                 "pc_type": "fieldsplit",
                                 "pc_fieldsplit_type": "multiplicative",
                                 "fieldsplit_0": mg,
                                 "fieldsplit_1": mg,
                                 }
                 fieldsplit_U = {"ksp_type": "preonly",
-                                # "ksp_type": "bcgs",
-                                # "ksp_rtol": 1e-6,
                                 "pc_type": "fieldsplit",
                                 "pc_fieldsplit_type": "multiplicative",
                                 "fieldsplit_0": mg,
@@ -1055,11 +1006,8 @@ class EchemSolver(ABC):
                       "pc_type": "lu", }
                 pc = {"mat_type": "aij",
                       "ksp_rtol": 1e-10,
-                      # "ksp_atol": 1e-10,
                       "ksp_converged_reason": None,
                       "ksp_monitor": None,
-                      # "ksp_view": None,
-                      # "ksp_max_it": 1,
                       "ksp_type": "fgmres",
                       "ksp_gmres_restart": 1000,
                       "ksp_max_it": 1000,
@@ -1098,8 +1046,6 @@ class EchemSolver(ABC):
                       "ksp_rtol": 1e-10,
                       "ksp_converged_reason": None,
                       "ksp_monitor": None,
-                      # "ksp_view": None,
-                      # "ksp_max_it": 1,
                       "ksp_type": "fgmres",
                       "ksp_gmres_restart": 1000,
                       "ksp_max_it": 1000,
@@ -1125,8 +1071,6 @@ class EchemSolver(ABC):
                       "ksp_rtol": 1e-10,
                       "ksp_converged_reason": None,
                       "ksp_monitor": None,
-                      # "ksp_view": None,
-                      # "ksp_max_it": 1,
                       "ksp_type": "fgmres",
                       "ksp_gmres_restart": 200,
                       "ksp_pc_side": "right",
@@ -1142,8 +1086,6 @@ class EchemSolver(ABC):
                       "ksp_rtol": 1e-6,
                       "ksp_converged_reason": None,
                       "ksp_monitor": None,
-                      # "ksp_view": None,
-                      # "ksp_max_it": 1,
                       "ksp_type": "fgmres",
                       "ksp_gmres_restart": 200,
                       "ksp_pc_side": "right",
@@ -1157,8 +1099,6 @@ class EchemSolver(ABC):
         elif pc_type.startswith("cpr"):
             if self.gas_params and self.flow["advection"]:
                 fieldsplit_p = {"ksp_type": "preonly",
-                                # "ksp_type": "bcgs",
-                                # "ksp_rtol": 1e-4,
                                 "pc_type": "fieldsplit",
                                 "pc_fieldsplit_type": "multiplicative",
                                 "fieldsplit_0": mg,
@@ -1171,8 +1111,6 @@ class EchemSolver(ABC):
                 fieldsplit_p = mg
 
             fieldsplit_U = {"ksp_type": "preonly",
-                            # "ksp_type": "bcgs",
-                            # "ksp_rtol": 1e-4,
                             "pc_type": "fieldsplit",
                             "pc_fieldsplit_type": "multiplicative",
                             "fieldsplit_0": mg,
@@ -1188,8 +1126,6 @@ class EchemSolver(ABC):
                               }
             pc = {"ksp_converged_reason": None,
                   "ksp_monitor": None,
-                  # "ksp_view": None,
-                  # "ksp_max_it": 1,
                   "ksp_type": "fgmres",
                   "ksp_rtol": 1e-10,
                   "ksp_gmres_restart": 1000,
@@ -1206,15 +1142,8 @@ class EchemSolver(ABC):
                   "sub_0_fieldsplit_1_ksp_type": "gmres",
                   "sub_0_fieldsplit_1_ksp_max_it": 0,
                   "sub_0_fieldsplit_1_pc_type": "none",
-                  # "sub_0_fieldsplit_1": fieldsplit_C,
-                  # "sub_1_fieldsplit_1_ksp_type": "gmres",
-                  # "sub_1_fieldsplit_1_ksp_max_it": 0,
-                  # "sub_1_fieldsplit_1_pc_type": "none",
-
                   "sub_1_sub_pc_type": "ilu",
                   "sub_1_sub_pc_factor_levels": 0,
-                  # "sub_2_sub_pc_type": "ilu",
-                  # "sub_2_sub_pc_factor_levels": 0,
                   "mat_type": "aij",
                   }
 
@@ -1230,8 +1159,6 @@ class EchemSolver(ABC):
                   "ksp_rtol": 1e-10,
                   "ksp_converged_reason": None,
                   "ksp_monitor": None,
-                  # "ksp_view": None,
-                  # "ksp_max_it": 1,
                   "ksp_gmres_restart": 1000,
                   "pc_type": "bjacobi",
                   "sub_pc_type": "ilu",
@@ -1240,16 +1167,13 @@ class EchemSolver(ABC):
         elif pc_type == "gmg":
             pc = {"mat_type": "aij",
                   "ksp_type": "fgmres",
-                  # "ksp_pc_side": "right",
                   "ksp_gmres_restart": 200,
                   "ksp_converged_reason": None,
                   "ksp_monitor": None,
                   "ksp_rtol": 1e-2,
                   "pc_type": "mg",
                   "mg_coarse_ksp_type": "preonly",
-                  #   "mg_coarse_ksp_rtol": 1e-6,
                   "mg_coarse_pc_type": "lu",
-                  #   "mg_coarse_sub_pc_type": "ilu",
                   "mg_levels_ksp_type": "richardson",
                   "mg_levels_ksp_max_it": 1,
                   "mg_levels_pc_type": "bjacobi",
@@ -1258,7 +1182,6 @@ class EchemSolver(ABC):
         elif pc_type == "amg":
             pc = {"mat_type": "aij",
                   "ksp_type": "fgmres",
-                  # "ksp_pc_side": "right",
                   "ksp_gmres_restart": 200,
                   "ksp_converged_reason": None,
                   "ksp_monitor": None,
@@ -1434,12 +1357,6 @@ class EchemSolver(ABC):
         if family == "DG" and layers is not None:
             # Create function spaces for an extruded mesh
             PETSc.Sys.Print("Creating function spaces for an extruded mesh")
-            #e = FiniteElement("DQ", cell=self.mesh.ufl_cell(), degree=self.poly_degree, variant='fdm')
-            #self.V = FunctionSpace(self.mesh, e)
-            #e = FiniteElement("DQ", cell=self.mesh.ufl_cell(), degree=self.poly_degreeU, variant='fdm')
-            #self.Vu = FunctionSpace(self.mesh, e)
-            #e = FiniteElement("DQ", cell=self.mesh.ufl_cell(), degree=self.poly_degreep, variant='fdm')
-            #self.Vp = FunctionSpace(self.mesh, e)
             self.V = FunctionSpace(
                 self.mesh,
                 "DQ",
@@ -1746,7 +1663,6 @@ class EchemSolver(ABC):
         advection tterm.
         """
 
-        #X_0 = gas_params["bulk"]
         i_g = gas_params.get("i_g")
         X_gas = gas_params.get("gas")
         mass = gas_params.get("molar mass")
