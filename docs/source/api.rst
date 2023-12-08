@@ -1,10 +1,13 @@
 API
 ===
 
-EchemSolver class
------------------
+EchemSolver classes
+-------------------
 
 .. autoclass:: echemfem.EchemSolver
+   :members:
+
+.. autoclass:: echemfem.TransientEchemSolver
    :members:
 
 Utility meshes

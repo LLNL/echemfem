@@ -23,6 +23,7 @@ extensions = [
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
+    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
     'firedrake': ('https://firedrakeproject.org/', None),
 }
@@ -36,3 +37,4 @@ html_theme = 'sphinx_rtd_theme'
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
+

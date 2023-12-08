@@ -2605,7 +2605,7 @@ class TransientEchemSolver(EchemSolver):
         """Solves the transient problem and outputs the solutions
 
         Args:
-            times (list or numpy.array): array of the discrete temporal grid
+            times (list or :class:`numpy.ndarray`): array of the discrete temporal grid
 
         """
 
