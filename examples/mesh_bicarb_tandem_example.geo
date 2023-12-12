@@ -126,7 +126,7 @@ Transfinite Curve{3,11} = 5 Using Progression 1.35;
 Transfinite Curve{4,12} = 3 Using Progression 1.0;
 Transfinite Curve{6,14} = 3 Using Progression 1/1.4;
 Transfinite Curve{7,15} = 3 Using Progression 1.4;
-Transfinite Curve{5,13,29,32} = 59 Using Bump 0.4;//changed by Jack on 12/02/2023, original was: Transfinite Curve{5,13,29,32} = 99 Using Bump 0.4;
+Transfinite Curve{5,13,29,32} = 59 Using Bump 0.4;
 
 //x-dir inlet transition
 Transfinite Curve{1,9} = 51 Using Progression .9;
