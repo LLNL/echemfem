@@ -1,8 +1,8 @@
 La = 0.00025;
-L = 0.001;//changed by Jack, 12/04/2023, originally was: L = 0.01;
+L = 0.001;
 Lb = 0.00025;
-h = 6e-4;//changed by Jack, 12/04/2023, originallly was: h = 0.00125;
-lc = L/7.; //0.1*h; //changed by Jack, 12/04/2023, originally was: lc = L/70.;
+h = 6e-4;
+lc = L/7.; 
 delta = 1e-8; //boundary layer 1
 delta2 = 1e-6;// refined region around points
 delta2b = 2e-4; //start of electrode
@@ -120,16 +120,6 @@ Physical Surface("Channel", 1) = {1,2,3,4,5,6,7,8,9,10,11};
 Transfinite Curve{18,19,20,21,22,23,24,25,26} = 26 Using Progression 1.15;
 
 
-//------------------------original section below, changed by Jack, 12/04/2023
-//x-dir electrode
-Transfinite Curve{2,10} = 29 Using Progression 1/1.4;
-Transfinite Curve{3,11} = 41 Using Progression 1.35;
-Transfinite Curve{4,12} = 25 Using Progression 1.0;
-Transfinite Curve{6,14} = 29 Using Progression 1/1.4;
-Transfinite Curve{7,15} = 29 Using Progression 1.4;
-Transfinite Curve{5,13,29,32} = 599 Using Bump 0.4;//changed by Jack on 12/02/2023, original was: Transfinite Curve{5,13,29,32} = 99 Using Bump 0.4;
-//----------------------------------------------------------------------
-//------------------------new section below, changed by Jack, 12/04/2023
 //x-dir electrode
 Transfinite Curve{2,10} = 3 Using Progression 1/1.4;
 Transfinite Curve{3,11} = 5 Using Progression 1.35;
@@ -137,7 +127,6 @@ Transfinite Curve{4,12} = 3 Using Progression 1.0;
 Transfinite Curve{6,14} = 3 Using Progression 1/1.4;
 Transfinite Curve{7,15} = 3 Using Progression 1.4;
 Transfinite Curve{5,13,29,32} = 59 Using Bump 0.4;//changed by Jack on 12/02/2023, original was: Transfinite Curve{5,13,29,32} = 99 Using Bump 0.4;
-//----------------------------------------------------------------------
 
 //x-dir inlet transition
 Transfinite Curve{1,9} = 51 Using Progression .9;
