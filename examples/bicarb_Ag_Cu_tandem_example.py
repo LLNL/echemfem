@@ -149,7 +149,7 @@ class CarbonateSolver(EchemSolver):
         
         
         mesh = Mesh('mesh_bicarb_tandem_example.msh')
-
+        #Note: will need to use "gmsh -2 mesh_bicarb_tandem_example.geo" command to convert to .msh format
 
 
         #---------------------------------------------------
@@ -510,7 +510,7 @@ solver.solve()
 cCO2, cOH, cHCO3, cCO3, cH, cH2, cCO, cC2H4, cC2H6O, phi2 = solver.u.split()
 
 
-Vlist = np.linspace(-0.5,-1.5,num=21)
+Vlist = np.linspace(-0.5,-1.3,num=17)
 jCO = []
 jH2_Ag = []
 jC2H4 = []
