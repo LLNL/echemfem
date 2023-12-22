@@ -4,8 +4,6 @@ import numpy as np
 import sys
 from Navier_Stokes_irregular import navier_stokes_no_slip
 
-
-diffusion_coefficient=1.
 peclet=10
 damkohler=10
 Ly = 0.1
@@ -23,7 +21,8 @@ class CarbonateSolver(EchemSolver):
         Reactors. Industrial & Engineering Chemistry Research, 60(31),
         pp.11824-11833.
         """
-        mesh=Mesh('squares.msh')
+        mesh=Mesh('squares_small.msh')
+        #mesh=Mesh('squares.msh')
         
         C_1_inf = 1.
         C_2_inf = Constant(0)
@@ -73,11 +72,6 @@ class CarbonateSolver(EchemSolver):
         self.vel=navier_stokes_no_slip(self.mesh)
         
 
-
-
-
-diffusion_coefficient=Lx/peclet
-mass_transfert_coefficient=damkohler/Lx*diffusion_coefficient
 solver = CarbonateSolver()
 solver.setup_solver()
 solver.solve()
@@ -87,14 +81,11 @@ cC1, _, = solver.u.split()
 flux = assemble(dot(grad(cC1), n) * ds(11))
 flux1 = assemble(dot(grad(cC1), n)/dot(grad(cC1), n)*ds(11))
 
-Peclet=Lx/diffusion_coefficient
-Damkohler=mass_transfert_coefficient*Lx/diffusion_coefficient
-
 
 print("Flux = %f" % flux)
 print("surface : ",flux1)
 fichier=open('results_square.dat','a')
-fichier.write(str(Peclet)+' '+str(damkohler)+' '+str(flux)+' '+str(flux1)+' \n')
+fichier.write(str(peclet)+' '+str(damkohler)+' '+str(flux)+' '+str(flux1)+' \n')
 fichier.close()
 
-File("SquareWave_"+str(Peclet)+str(damkohler)+".pvd").write(cC1)
+File("SquareWave_"+str(peclet)+str(damkohler)+".pvd").write(cC1)
