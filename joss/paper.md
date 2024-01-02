@@ -7,17 +7,36 @@ tags:
   - electrochemistry
 authors:
   - name: Thomas Roy
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0002-4286-4507
     corresponding: true # (This is how to denote the corresponding author)
     affiliation: 1
-  - name: Author Without ORCID
+  - name: Aymeric Antimes
     affiliation: 2
+  - name: Victoria Ehlinger
+    orcid: 0000-0001-7333-1271
+    affiliation: 1
+  - name: Florian Euzenat
+    affiliation: 2
+  - name: Nitish Govindarajan
+    orcid: 0000-0003-3227-5183
+    affiliation: 1
+  - name: Jack Guo
+    orcid: 0000-0003-4090-9289
+    affiliation: 1
+  - name: Tiras Y. Lin
+    orcid: 0000-0002-3377-9933
+    affiliation: 1
+  - name: Thomas Moore
+    orcid: 0000-0003-0802-5547
+    affiliation: 3
 affiliations:
  - name: Lawrence Livermore National Laboratory, CA, USA
    index: 1
  - name: Institution Name, Country
    index: 2
-date: 12 December 2023
+ - name: Queensland University of Technology, Australia
+   index: 3
+date: 2 January 2024
 bibliography: paper.bib
 
 ---
@@ -89,7 +108,7 @@ In one of the demos, the Navier-Stokes equations are solved in a reactor with an
 
 In some cases, for example for fast flows, stabilization schemes that are not offered in other software may be required.
 For continuous Galerkin (CG) elements, a streamline-upwind Petrov-Galerkin (SUPG) method for the Nernst-Planck equation is provided.
-For discontinuous Galerking (DG), a custom upwind scheme for the Nernst-Planck equation is used [@roy2023scalable].
+For discontinuous Galerking (DG), a custom upwind scheme for the Nernst-Planck equation is used [@roy2023scalable,batista2023design].
 In both cases, the upwinding considers the combined advection-migration ``velocity''.
 
 As opposed to commercial software, custom scalable solvers are available in Firedrake.
