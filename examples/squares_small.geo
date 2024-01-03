@@ -73,12 +73,13 @@ EndFor
 Line(6)={4,7};
 Line(k-1)={k-1,1};
 //+
-Physical Curve("Cathode",11)={1001:linec-1};
-Physical Curve("Pore",10)={8:linep};
+Physical Curve("Cathode", 11)={1001:linec-1};
+Physical Curve("Pore", 10)={8:linep};
 Physical Curve("VerEdgeInlet", 12) = {4:5};
 Physical Curve("VerEdgeOutlet", 14) = {1,2};
 //+
-Physical Curve("HorEdgeTop",13)={3};
+Physical Curve("HorEdgeTop", 13) = {3};
+Physical Curve("Wall", 15) = {6,14};
 
 Curve Loop(1)={2,3,4,4999:max};
 //Curve Loop(2)={1,-max:-4999,5,6:k-1};

@@ -9,6 +9,7 @@ class FlowSolver(ABC):
 
     def __init__(self, mesh, fluid_params, boundary_markers):
         self.mesh = mesh
+        self.dim = mesh.topological_dimension()
         self.fluid_params = fluid_params
         self.boundary_markers = boundary_markers
         self.setup_functions()
@@ -64,7 +65,8 @@ class NavierStokesFlowSolver(FlowSolver):
         q = self.q
         Z = self.Z
 
-        Re = Constant(100.0)
+        params = self.fluid_params
+        Re = Constant(params["Reynolds number"])
 
         F = (
         1.0/Re * inner(grad(u), grad(v)) * dx +
@@ -72,14 +74,23 @@ class NavierStokesFlowSolver(FlowSolver):
         p * div(v) * dx +
         div(u) * q * dx
         )
-        x, y = SpatialCoordinate(self.mesh)
 
         # setup bcs
-        bcs = [
-           DirichletBC(Z.sub(0), Constant((0, 0)), (11,10)), # wall
-           DirichletBC(Z.sub(0), as_vector([y, Constant(0)]), (12,13,14)), # shear flow
-           DirichletBC(Z.sub(1),Constant(0),(13)) # outlet     
-           ]
+        bcs = []
+        if self.boundary_markers.get("no slip"):
+            if self.dim == 2:
+                zero = Constant((0, 0))
+            elif self.dim == 3:
+                zero = Constant((0, 0, 0))
+            bcs.append(DirichletBC(Z.sub(0), zero, self.boundary_markers["no slip"]))
+        if self.boundary_markers.get("inlet velocity"):
+           bcs.append(DirichletBC(Z.sub(0), params["inlet velocity"], self.boundary_markers["inlet velocity"]))
+        if self.boundary_markers.get("outlet velocity"):
+           bcs.append(DirichletBC(Z.sub(0), params["outlet velocity"], self.boundary_markers["outlet velocity"]))
+        if self.boundary_markers.get("outlet pressure"):
+           bcs.append(DirichletBC(Z.sub(1), params["outlet pressure"], self.boundary_markers["outlet pressure"]))
+        if self.boundary_markers.get("inlet pressure"):
+           bcs.append(DirichletBC(Z.sub(1), params["inlet pressure"], self.boundary_markers["inlet pressure"]))
 
         self.nullspace = MixedVectorSpaceBasis(
         Z, [Z.sub(0), VectorSpaceBasis(constant=True)])
@@ -125,7 +136,17 @@ class NavierStokesFlowSolver(FlowSolver):
 
 
 mesh=Mesh('../examples/squares_small.msh')
-boundary_markers = None
-solver = NavierStokesFlowSolver(mesh, None, boundary_markers)
+boundary_markers = {"no slip": (11,10,15),
+                    "inlet velocity": (12,13,),
+                    "outlet velocity": (14,)
+                    }
+
+x, y = SpatialCoordinate(mesh)
+vel = as_vector([y, Constant(0)])
+flow_params = {"inlet velocity": vel,
+               "outlet velocity": vel,
+               "Reynolds number": 100
+               }
+solver = NavierStokesFlowSolver(mesh, flow_params, boundary_markers)
 solver.setup_solver()
 solver.solve()
