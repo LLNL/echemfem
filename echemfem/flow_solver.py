@@ -92,45 +92,56 @@ class NavierStokesFlowSolver(FlowSolver):
         if self.boundary_markers.get("inlet pressure"):
            bcs.append(DirichletBC(Z.sub(1), params["inlet pressure"], self.boundary_markers["inlet pressure"]))
 
-        self.nullspace = MixedVectorSpaceBasis(
-        Z, [Z.sub(0), VectorSpaceBasis(constant=True)])
+        if self.boundary_markers.get("inlet pressure") or self.boundary_markers.get("outlet pressure"):
+            self.nullspace = None
+        else:
+            self.nullspace = MixedVectorSpaceBasis( Z, [Z.sub(0),
+                                                        VectorSpaceBasis(constant=True)])
 
         self.Form = F
         self.bcs = bcs
         self.Re = Re
 
-    def setup_solver(self):
+    def setup_solver(self, ksp_solver="lu"):
         """ PCD preconditioner
         """
 
-        appctx = {"Re": self.Re, "velocity_space": 0}
-        parameters = {"mat_type": "matfree",
-                  "snes_monitor": None,
-                 "ksp_type": "fgmres",
-                 "ksp_gmres_modifiedgramschmidt": None,
-                 "ksp_monitor_true_residual": None,
-                 "pc_type": "fieldsplit",
-                 "pc_fieldsplit_type": "schur",
-                 "pc_fieldsplit_schur_fact_type": "lower",
-                 "fieldsplit_0_ksp_type": "preonly",
-                 "fieldsplit_0_pc_type": "python",
-                 "fieldsplit_0_pc_python_type": "firedrake.AssembledPC",
-                 "fieldsplit_0_assembled_pc_type": "hypre",
-                 "fieldsplit_1_ksp_type": "gmres",
-                 "fieldsplit_1_ksp_rtol": 1e-4,
-                 "fieldsplit_1_pc_type": "python",
-                 "fieldsplit_1_pc_python_type": "firedrake.PCDPC",
-                 "fieldsplit_1_pcd_Mp_ksp_type": "preonly",
-                 "fieldsplit_1_pcd_Mp_pc_type": "bjacobi",
-                 "fieldsplit_1_pcd_Mp_sub_pc_type": "ilu",
-                 "fieldsplit_1_pcd_Kp_ksp_type": "preonly",
-                 "fieldsplit_1_pcd_Kp_pc_type": "hypre",
-                 "fieldsplit_1_pcd_Fp_mat_type": "matfree"}
+        if ksp_solver == "lu":
+            appctx = None
+            parameters = {"snes_monitor": None,
+                          "ksp_type": "preonly",
+                          "pc_type": "lu",
+                          "pc_factor_mat_solver_type": "mumps",
+                          }
+
+        elif ksp_solver == "pcd":
+            appctx = {"Re": self.Re, "velocity_space": 0}
+            parameters = {"mat_type": "matfree",
+                      "snes_monitor": None,
+                     "ksp_type": "fgmres",
+                     "ksp_gmres_modifiedgramschmidt": None,
+                     "ksp_monitor_true_residual": None,
+                     "pc_type": "fieldsplit",
+                     "pc_fieldsplit_type": "schur",
+                     "pc_fieldsplit_schur_fact_type": "lower",
+                     "fieldsplit_0_ksp_type": "preonly",
+                     "fieldsplit_0_pc_type": "python",
+                     "fieldsplit_0_pc_python_type": "firedrake.AssembledPC",
+                     "fieldsplit_0_assembled_pc_type": "hypre",
+                     "fieldsplit_1_ksp_type": "gmres",
+                     "fieldsplit_1_ksp_rtol": 1e-4,
+                     "fieldsplit_1_pc_type": "python",
+                     "fieldsplit_1_pc_python_type": "firedrake.PCDPC",
+                     "fieldsplit_1_pcd_Mp_ksp_type": "preonly",
+                     "fieldsplit_1_pcd_Mp_pc_type": "bjacobi",
+                     "fieldsplit_1_pcd_Mp_sub_pc_type": "ilu",
+                     "fieldsplit_1_pcd_Kp_ksp_type": "preonly",
+                     "fieldsplit_1_pcd_Kp_pc_type": "hypre",
+                     "fieldsplit_1_pcd_Fp_mat_type": "matfree"}
 
         self.problem = NonlinearVariationalProblem(self.Form, self.soln,
                                                    bcs=self.bcs)
         self.solver = NonlinearVariationalSolver(self.problem, appctx=appctx,
                                                  solver_parameters=parameters,
                                                  nullspace=self.nullspace)
-
 
