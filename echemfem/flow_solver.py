@@ -1,5 +1,7 @@
 from abc import ABC
 from firedrake import *
+from petsc4py import PETSc
+pprint = PETSc.Sys.Print
 
 class FlowSolver(ABC):
     """Base class for a flow solver.
@@ -66,14 +68,24 @@ class NavierStokesFlowSolver(FlowSolver):
         Z = self.Z
 
         params = self.fluid_params
-        Re = Constant(params["Reynolds number"])
 
-        F = (
-        1.0/Re * inner(grad(u), grad(v)) * dx +
-        inner(dot(grad(u), u), v) * dx -
-        p * div(v) * dx +
-        div(u) * q * dx
-        )
+        # nondimensional Navier-Stokes
+        if params.get("Reynolds number"):
+            pprint("Using nondimensional Navier-Stokes")
+            self.Re = Constant(params["Reynolds number"])
+            F = 1.0/self.Re * inner(grad(u), grad(v)) * dx \
+                + inner(dot(grad(u), u), v) * dx \
+                - p * div(v) * dx \
+                + div(u) * q * dx
+        # dimensional Navier-Stokes
+        else:
+            pprint("Using dimensional Navier-Stokes")
+            rho = Constant(params["density"])
+            nu = Constant(params["kinematic viscosity"])
+            F = nu * inner(grad(u), grad(v)) * dx \
+                + inner(dot(grad(u), u), v) * dx \
+                - 1.0/rho * p * div(v) * dx \
+                + div(u) * q * dx
 
         # setup bcs
         bcs = []
@@ -100,10 +112,9 @@ class NavierStokesFlowSolver(FlowSolver):
 
         self.Form = F
         self.bcs = bcs
-        self.Re = Re
 
     def setup_solver(self, ksp_solver="lu"):
-        """ PCD preconditioner
+        """ PCD preconditioner for nondimensional Navier-Stokes
         """
 
         if ksp_solver == "lu":
