@@ -134,19 +134,3 @@ class NavierStokesFlowSolver(FlowSolver):
                                                  nullspace=self.nullspace)
 
 
-
-mesh=Mesh('../examples/squares_small.msh')
-boundary_markers = {"no slip": (11,10,15),
-                    "inlet velocity": (12,13,),
-                    "outlet velocity": (14,)
-                    }
-
-x, y = SpatialCoordinate(mesh)
-vel = as_vector([y, Constant(0)])
-flow_params = {"inlet velocity": vel,
-               "outlet velocity": vel,
-               "Reynolds number": 100
-               }
-solver = NavierStokesFlowSolver(mesh, flow_params, boundary_markers)
-solver.setup_solver()
-solver.solve()

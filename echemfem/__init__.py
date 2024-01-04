@@ -1,3 +1,4 @@
 from echemfem.cylindricalmeasure import CylindricalMeasure
 from echemfem.solver import EchemSolver, TransientEchemSolver
+from echemfem.flow_solver import NavierStokesFlowSolver
 from echemfem.utility_meshes import IntervalBoundaryLayerMesh, RectangleBoundaryLayerMesh

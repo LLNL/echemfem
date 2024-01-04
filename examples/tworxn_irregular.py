@@ -1,8 +1,5 @@
 from firedrake import *
-from echemfem import EchemSolver
-import numpy as np
-import sys
-from Navier_Stokes_irregular import navier_stokes_no_slip
+from echemfem import EchemSolver, NavierStokesFlowSolver
 
 peclet=10
 damkohler=10
@@ -10,7 +7,7 @@ Ly = 0.1
 Lx = 1.
 diffusion_coefficient=Lx/peclet
 mass_transfert_coefficient=damkohler/Lx*diffusion_coefficient
-
+mesh=Mesh('squares_small.msh')
 
 class CarbonateSolver(EchemSolver):
     def __init__(self):
@@ -21,8 +18,6 @@ class CarbonateSolver(EchemSolver):
         Reactors. Industrial & Engineering Chemistry Research, 60(31),
         pp.11824-11833.
         """
-        mesh=Mesh('squares_small.msh')
-        #mesh=Mesh('squares.msh')
         
         C_1_inf = 1.
         C_2_inf = Constant(0)
@@ -69,7 +64,21 @@ class CarbonateSolver(EchemSolver):
                                  }
 
     def set_velocity(self):
-        self.vel=navier_stokes_no_slip(self.mesh)
+        boundary_markers = {"no slip": (11,10,15),
+                            "inlet velocity": (12,13,),
+                            "outlet velocity": (14,)
+                            }
+
+        x, y = SpatialCoordinate(mesh)
+        vel = as_vector([y, Constant(0)])
+        flow_params = {"inlet velocity": vel,
+                       "outlet velocity": vel,
+                       "Reynolds number": 100
+                       }
+        NS_solver = NavierStokesFlowSolver(mesh, flow_params, boundary_markers)
+        NS_solver.setup_solver()
+        NS_solver.solve()
+        self.vel = NS_solver.vel
         
 
 solver = CarbonateSolver()
