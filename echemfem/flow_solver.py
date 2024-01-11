@@ -16,6 +16,7 @@ class FlowSolver(ABC):
         self.boundary_markers = boundary_markers
         self.setup_functions()
         self.setup_problem()
+        self.setup_dirichlet_bcs()
 
     def setup_functions(self):
         # Taylor Hood
@@ -30,10 +31,51 @@ class FlowSolver(ABC):
     def setup_problem(self):
         # set up PDE system - problem specific
         pass
+    
+    def setup_dirichlet_bcs(self):
+        # set up Dirichlet boundary conditions - should be the same regardless of model
+
+        Z = self.Z
+        params = self.fluid_params
+        bcs = []
+        if self.boundary_markers.get("no slip"):
+            if self.dim == 2:
+                zero = Constant((0, 0))
+            elif self.dim == 3:
+                zero = Constant((0, 0, 0))
+            bcs.append(DirichletBC(Z.sub(0), zero, self.boundary_markers["no slip"]))
+        if self.boundary_markers.get("inlet velocity"):
+           bcs.append(DirichletBC(Z.sub(0), params["inlet velocity"],
+                                  self.boundary_markers["inlet velocity"]))
+        if self.boundary_markers.get("outlet velocity"):
+           bcs.append(DirichletBC(Z.sub(0), params["outlet velocity"],
+                                  self.boundary_markers["outlet velocity"]))
+        if self.boundary_markers.get("outlet pressure"):
+           bcs.append(DirichletBC(Z.sub(1), params["outlet pressure"],
+                                  self.boundary_markers["outlet pressure"]))
+        if self.boundary_markers.get("inlet pressure"):
+           bcs.append(DirichletBC(Z.sub(1), params["inlet pressure"],
+                                  self.boundary_markers["inlet pressure"]))
+
+        if self.boundary_markers.get("inlet pressure") or self.boundary_markers.get("outlet pressure"):
+            self.nullspace = None
+        else:
+            self.nullspace = MixedVectorSpaceBasis( Z, [Z.sub(0),
+                                                        VectorSpaceBasis(constant=True)])
+        self.bcs = bcs
 
     def setup_solver(self):
-        # set up nonlinear solver - preconditioner is problem specific
-        pass
+        # set up nonlinear solver
+        parameters = {"snes_monitor": None,
+                      "ksp_type": "preonly",
+                      "pc_type": "lu",
+                      "pc_factor_mat_solver_type": "mumps",
+                      }
+        self.problem = NonlinearVariationalProblem(self.Form, self.soln,
+                                                   bcs=self.bcs)
+        self.solver = NonlinearVariationalSolver(self.problem,
+                                                 solver_parameters=parameters,
+                                                 nullspace=self.nullspace)
 
     def solve(self):
         self.solver.solve()
@@ -41,7 +83,7 @@ class FlowSolver(ABC):
         u.rename("Velocity")
         p.rename("Pressure")
         if True:
-            file = File("flow.pvd")
+            file = File("results/flow.pvd")
             file.write(u, p)
 
         with CheckpointFile('Velocity_field'+'.h5', 'w') as afile:
@@ -53,19 +95,16 @@ class FlowSolver(ABC):
 
 class NavierStokesFlowSolver(FlowSolver):
 
-    """
-        Inputs, which are useful for nondim
-        Length L: default takes x direction from mesh
-        Flow velocity U: reference velocity. if there is an inflow velocity, can use that. if it's pressure BC, no idea
-        Density. 
-        Kinematic viscosity nu: default room temp water? 1e-6 m2/s
+    """ Incompressible Navier-Stokes solver
+
+        For nondimensional Navier-Stokes, pass Reynolds number to fluid_params.
+        For dimensional Navier-Stokes, pass density and kinematic viscosity.
     """
     def setup_problem(self):
         u = self.u
         p = self.p
         v = self.v
         q = self.q
-        Z = self.Z
 
         params = self.fluid_params
 
@@ -87,31 +126,7 @@ class NavierStokesFlowSolver(FlowSolver):
                 - 1.0/rho * p * div(v) * dx \
                 + div(u) * q * dx
 
-        # setup bcs
-        bcs = []
-        if self.boundary_markers.get("no slip"):
-            if self.dim == 2:
-                zero = Constant((0, 0))
-            elif self.dim == 3:
-                zero = Constant((0, 0, 0))
-            bcs.append(DirichletBC(Z.sub(0), zero, self.boundary_markers["no slip"]))
-        if self.boundary_markers.get("inlet velocity"):
-           bcs.append(DirichletBC(Z.sub(0), params["inlet velocity"], self.boundary_markers["inlet velocity"]))
-        if self.boundary_markers.get("outlet velocity"):
-           bcs.append(DirichletBC(Z.sub(0), params["outlet velocity"], self.boundary_markers["outlet velocity"]))
-        if self.boundary_markers.get("outlet pressure"):
-           bcs.append(DirichletBC(Z.sub(1), params["outlet pressure"], self.boundary_markers["outlet pressure"]))
-        if self.boundary_markers.get("inlet pressure"):
-           bcs.append(DirichletBC(Z.sub(1), params["inlet pressure"], self.boundary_markers["inlet pressure"]))
-
-        if self.boundary_markers.get("inlet pressure") or self.boundary_markers.get("outlet pressure"):
-            self.nullspace = None
-        else:
-            self.nullspace = MixedVectorSpaceBasis( Z, [Z.sub(0),
-                                                        VectorSpaceBasis(constant=True)])
-
         self.Form = F
-        self.bcs = bcs
 
     def setup_solver(self, ksp_solver="lu"):
         """ PCD preconditioner for nondimensional Navier-Stokes
@@ -156,3 +171,51 @@ class NavierStokesFlowSolver(FlowSolver):
                                                  solver_parameters=parameters,
                                                  nullspace=self.nullspace)
 
+class NavierStokesBrinkmanFlowSolver(FlowSolver):
+
+    """ Incompressible Navier-Stokes-Brinkman solver
+
+        For dimensionless form, pass Reynolds number to fluid_params.
+        For dimensional form, pass density and kinematic viscosity.
+    """
+    def setup_problem(self):
+        u = self.u
+        p = self.p
+        v = self.v
+        q = self.q
+        Z = self.Z
+
+        params = self.fluid_params
+
+        # nondimensional Navier-Stokes-Brinkman
+        if params.get("Reynolds number"):
+            pprint("Using nondimensional Navier-Stokes-Brinkman")
+            self.Re = params["Reynolds number"]
+            Da = params["Darcy number"]
+            F = 1.0/ self.Re * inner(grad(u), grad(v)) * dx \
+                + inner(dot(grad(u), u), v) * dx \
+                - p * div(v) * dx \
+                + 1.0 / self.Re / Da * inner(u, v) * dx \
+                + div(u) * q * dx
+        # dimensional Navier-Stokes-Brinkman
+        else:
+            pprint("Using dimensional Navier-Stokes-Brinkman")
+            rho = params["density"]
+            nu = params["kinematic viscosity"]
+            eps = params["porosity"]
+            # inverse permeability: scalar field only for now
+            if params.get["permeability"]:
+                inv_K = 1 / params["permeability"]
+            else:
+                inv_K = params["inverse permeability"]
+            if params.get("effective kinematic viscosity"):
+                nu_eff = params.get("effective kinematic viscosity")
+            else:
+                nu_eff = nu
+            F = nu_eff * inner(grad(u), grad(v)) * dx \
+                + inner(dot(grad(u), u), v) * dx \
+                - 1.0/rho * p * div(v) * dx \
+                + nu * inv_K * inner(u, v) * dx \
+                + div(u) * q * dx
+
+        self.Form = F
