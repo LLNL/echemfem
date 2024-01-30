@@ -131,8 +131,11 @@ class NavierStokesFlowSolver(FlowSolver):
         # dimensional Navier-Stokes
         else:
             pprint("Using dimensional Navier-Stokes")
-            rho = Constant(params["density"])
-            nu = Constant(params["kinematic viscosity"])
+            rho = params["density"]
+            if params.get("kinematic viscosity"):
+                nu = params["kinematic viscosity"]
+            else:
+                nu = params["dynamic viscosity"] / rho
             F = nu * inner(grad(u), grad(v)) * dx \
                 + inner(dot(grad(u), u), v) * dx \
                 - 1.0/rho * p * div(v) * dx \
@@ -233,7 +236,10 @@ class NavierStokesBrinkmanFlowSolver(FlowSolver):
         else:
             pprint("Using dimensional Navier-Stokes-Brinkman")
             rho = params["density"]
-            nu = params["kinematic viscosity"]
+            if params.get("kinematic viscosity"):
+                nu = params["kinematic viscosity"]
+            else:
+                nu = params["dynamic viscosity"] / rho
             # inverse permeability: scalar field only for now
             if params.get("permeability"):
                 inv_K = 1 / params["permeability"]
@@ -248,6 +254,8 @@ class NavierStokesBrinkmanFlowSolver(FlowSolver):
                 - 1.0/rho * p * div(v) * dx \
                 + nu * inv_K * inner(u, v) * dx \
                 + div(u) * q * dx
+                #- inner(u, grad(q)) * dx
+                # this sets u.n = 0 on Neumann BCs
             if self.boundary_markers.get("inlet pressure"):
                 n = FacetNormal(self.mesh)
                 in_id = self.boundary_markers["inlet pressure"]
