@@ -7,6 +7,18 @@ class FlowSolver(ABC):
     """Base class for a flow solver.
 
     This class is used to create solvers for fluid flow decoupled from the chemistry
+    Attributes:
+        mesh (:class:`firedrake.mesh.MeshGeometry`): Mesh object from firedrake
+        flow_params (dict): Dictionary containing physical parameters 
+        boundary_markers (dict): Dictionary where the keys are :py:class:`str:`
+        representing the type of boundary condition, and the values are
+        :py:class:`tuple` containing the boundary indices. For example :
+
+        .. code-block::
+
+            self.boundary_markers = {"inlet velocity": (1,)}
+
+        sets the boundary condition ``"inlet velocity"`` on boundary 1.
     """
 
     def __init__(self, mesh, fluid_params, boundary_markers):
@@ -19,7 +31,9 @@ class FlowSolver(ABC):
         self.setup_dirichlet_bcs()
 
     def setup_functions(self):
-        # Taylor Hood
+        """Set up FunctionSpaces, solution Function, and TestFunctions
+        """
+        # Taylor Hood Elements
         mesh = self.mesh
         self.V = VectorFunctionSpace(mesh, "CG", 2)
         self.W = FunctionSpace(mesh, "CG", 1)
@@ -29,11 +43,13 @@ class FlowSolver(ABC):
         self.v, self.q = TestFunctions(self.Z)
 
     def setup_problem(self):
-        # set up PDE system - problem specific
+        """Set up PDE system - problem specific
+        """
         pass
     
     def setup_dirichlet_bcs(self):
-        # set up Dirichlet boundary conditions - should be the same regardless of model
+        """ Set up Dirichlet boundary conditions that are the same regardless of model
+        """
 
         Z = self.Z
         params = self.fluid_params
@@ -65,7 +81,8 @@ class FlowSolver(ABC):
         self.bcs = bcs
 
     def setup_solver(self):
-        # set up nonlinear solver
+        """Set up default nonlinear solver
+        """
         parameters = {"snes_monitor": None,
                       "ksp_type": "preonly",
                       "pc_type": "lu",
@@ -78,6 +95,8 @@ class FlowSolver(ABC):
                                                  nullspace=self.nullspace)
 
     def solve(self):
+        """Solve system and output results
+        """
         self.solver.solve()
         u, p = self.soln.subfunctions
         u.rename("Velocity")
@@ -95,10 +114,10 @@ class FlowSolver(ABC):
 
 class NavierStokesFlowSolver(FlowSolver):
 
-    """ Incompressible Navier-Stokes solver
+    """Incompressible Navier-Stokes solver
 
-        For nondimensional Navier-Stokes, pass Reynolds number to fluid_params.
-        For dimensional Navier-Stokes, pass density and kinematic viscosity.
+       For nondimensional Navier-Stokes, pass Reynolds number to fluid_params.
+       For dimensional Navier-Stokes, pass density and kinematic viscosity.
     """
     def setup_problem(self):
         u = self.u
@@ -154,7 +173,9 @@ class NavierStokesFlowSolver(FlowSolver):
         self.Form = F
 
     def setup_solver(self, ksp_solver="lu"):
-        """ PCD preconditioner for nondimensional Navier-Stokes
+        """Optional PCD preconditioner for nondimensional Navier-Stokes
+        Args:
+            ksp_solver (str): ``"lu"`` or ``"pcd"``
         """
 
         if ksp_solver == "lu":
@@ -198,10 +219,10 @@ class NavierStokesFlowSolver(FlowSolver):
 
 class NavierStokesBrinkmanFlowSolver(FlowSolver):
 
-    """ Incompressible Navier-Stokes-Brinkman solver
+    """Incompressible Navier-Stokes-Brinkman solver
 
-        For dimensionless form, pass Reynolds number to fluid_params.
-        For dimensional form, pass density and kinematic viscosity.
+       For dimensionless form, pass Reynolds number to fluid_params.
+       For dimensional form, pass density and kinematic viscosity.
     """
     def setup_problem(self):
         u = self.u
