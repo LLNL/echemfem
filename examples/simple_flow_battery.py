@@ -13,11 +13,8 @@ else:
 #flow_rate = 2.4 * 5/3 * 1e-8 # m3/s -> x ml/min
 #area = 4e-4 # m2 -> 4 cm2
 #v_avg = flow_rate/area
-v_avg = 1e-10#
-print(v_avg)
-
+v_avg = 1e-10
 current_density = 50 * 10 # A/m2 -> 50 mA/cm2
-current_density = 1e-1 # A/m2 -> 50 mA/cm2
 
 electrode_thickness = 500e-6 # m
 electrode_length = 500e-6#2e-3 # m
@@ -99,8 +96,8 @@ class BortelsSolver(EchemSolver):
         echem_params = []
         echem_params.append({"reaction": reaction,
                              "electrons": 1,
-                             "stoichiometry": {"V2": 1,
-                                               "V3": -1},
+                             "stoichiometry": {"V2": -1,
+                                               "V3": 1},
                              })
         #echem_params = []
         super().__init__(
@@ -139,14 +136,13 @@ class BortelsSolver(EchemSolver):
         vel_out = as_vector([Constant(0), 4 * Constant(-v_avg) * (x - Constant(electrode_length-outlet_length)) * (Constant(electrode_length) - x)/Constant(outlet_length**2)])
         flow_params = {"inlet velocity": vel,
                        "outlet pressure": 0.,
-                       "inlet pressure": 4e-3,
+                       "inlet pressure": 1e-1,
                        "outlet velocity": vel_out,
                        "density": 1e3, # kg/m3
                        "dynamic viscosity": 8.9e-4, # Pa s
                        "permeability": 5.53e-11 # m2
                        }
         NS_solver = NavierStokesBrinkmanFlowSolver(mesh, flow_params, boundary_markers)
-        #NS_solver = NavierStokesFlowSolver(mesh, flow_params, boundary_markers)
         NS_solver.setup_solver()
         NS_solver.solve()
         self.vel = NS_solver.vel
@@ -155,14 +151,3 @@ class BortelsSolver(EchemSolver):
 solver = BortelsSolver()
 solver.setup_solver(initial_solve=False)
 solver.solve()
-us = solver.u.subfunctions
-i_n = Function(solver.V, name="Current Density").interpolate(solver.echem_params[0]["reaction"](solver.u))
-File("results/current_density.pvd").write(i_n)
-Vec = VectorFunctionSpace(solver.mesh, "CG", 1)
-kappa_0 = solver.physical_params["liquid conductivity"]
-kappa = solver.physical_params["porosity"]**1.5 * kappa_0
-i_l = Function(Vec, name="ionic current").interpolate(kappa * grad(us[solver.i_Ul]))
-File("results/current.pvd").write(i_l)
-av = solver.physical_params["specific surface area"]
-print(assemble(av * i_n * dx)/assemble(Constant(1) * dx(domain=solver.mesh)))
-print(current_density/electrode_length)
