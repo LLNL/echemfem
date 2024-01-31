@@ -1,5 +1,5 @@
 from firedrake import *
-from echemfem import EchemSolver, NavierStokesBrinkmanFlowSolver, NavierStokesFlowSolver
+from echemfem import EchemSolver, NavierStokesBrinkmanFlowSolver
 import argparse
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument("--family", type=str, default='CG')
@@ -10,40 +10,18 @@ if args.family == "CG":
 else:
     SUPG = False
 
-#flow_rate = 2.4 * 5/3 * 1e-8 # m3/s -> x ml/min
-#area = 4e-4 # m2 -> 4 cm2
-#v_avg = flow_rate/area
-v_avg = 1e-10
 current_density = 50 * 10 # A/m2 -> 50 mA/cm2
 
 electrode_thickness = 500e-6 # m
-electrode_length = 500e-6#2e-3 # m
-inlet_length = electrode_length/4
-outlet_length = electrode_length/4
+electrode_length = 500e-6 # m
 mesh = RectangleMesh(50, 50, electrode_length, electrode_thickness, quadrilateral=True)
-if False:
-    x, y = SpatialCoordinate(mesh)
-    V1 = FunctionSpace(mesh, "HDiv Trace", 0)
-    f3 = Function(V1).interpolate(conditional(And(And(y < 1e-16,
-                                                    x <= electrode_length - outlet_length),
-                                                    x >= inlet_length), 1., 0.))
-    f5 = Function(V1).interpolate(conditional(And(y < 1e-16, x < inlet_length), 1., 0.))
-    f6 = Function(V1).interpolate(conditional(And(y < 1e-16, x > electrode_length - outlet_length), 1., 0.))
-    mesh = RelabeledMesh(mesh,
-                         [f3, f5, f6],
-                         [3, 5, 6])
 
-"""
-Schematic of the domain:
-     _____4_____
-    |           |
-    1           2
-    |           |
-    |_5_._3_._6_|
-
-"""
-
-class BortelsSolver(EchemSolver):
+class FlowBatterySolver(EchemSolver):
+    """
+    Lin, T.Y., Baker, S.E., Duoss, E.B. and Beck, V.A., 2022. Topology optimization
+    of 3D flow fields for flow batteries. Journal of The Electrochemical Society,
+    169(5), p.050540.
+    """
     def __init__(self):
         conc_params = []
 
@@ -57,7 +35,6 @@ class BortelsSolver(EchemSolver):
                             "bulk": 1000.,  # mol/m^3
                             })
 
-        #physical_params = {"flow": ["advection", "diffusion",  "porous"],
         physical_params = {"flow": ["advection", "diffusion", "poisson", "porous"],
                            "F": 96485.3329,  # C/mol
                            "R": 8.3144598,  # J/K/mol
@@ -88,10 +65,6 @@ class BortelsSolver(EchemSolver):
             eta = Phi1 - Phi2 - U0
             return J0 / Cref * (V2 * exp(beta * eta)
                                 - V3 * exp(-beta * eta))
-        #def reaction(u):
-        #    return 1e-1
-
-
 
         echem_params = []
         echem_params.append({"reaction": reaction,
@@ -99,7 +72,6 @@ class BortelsSolver(EchemSolver):
                              "stoichiometry": {"V2": -1,
                                                "V3": 1},
                              })
-        #echem_params = []
         super().__init__(
             conc_params,
             physical_params,
@@ -116,38 +88,24 @@ class BortelsSolver(EchemSolver):
                                  }
 
     def set_velocity(self):
-        boundary_markers = {"no slip": (3,4,1,2,),
-                            #"inlet velocity": (5,),
-                            #"outlet velocity": (6,),
-                            "outlet pressure": (6,),
-                            "inlet pressure": (5,),
-                            }
         boundary_markers = {"no slip": (3,4,),
-                            #"inlet velocity": (5,),
-                            #"outlet velocity": (6,),
-                            "outlet pressure": (2,),
                             "inlet pressure": (1,),
+                            "outlet pressure": (2,),
                             }
 
-        #vel = as_vector([Constant(0), Constant(v_avg)])
-        #vel_out = as_vector([Constant(0), Constant(-v_avg)])
-        x, y = SpatialCoordinate(self.mesh)
-        vel = as_vector([Constant(0), 4 * Constant(v_avg) * x * (Constant(inlet_length) - x)/Constant(inlet_length**2)])
-        vel_out = as_vector([Constant(0), 4 * Constant(-v_avg) * (x - Constant(electrode_length-outlet_length)) * (Constant(electrode_length) - x)/Constant(outlet_length**2)])
-        flow_params = {"inlet velocity": vel,
-                       "outlet pressure": 0.,
+        flow_params = {"outlet pressure": 0.,
                        "inlet pressure": 1e-1,
-                       "outlet velocity": vel_out,
                        "density": 1e3, # kg/m3
                        "dynamic viscosity": 8.9e-4, # Pa s
                        "permeability": 5.53e-11 # m2
                        }
-        NS_solver = NavierStokesBrinkmanFlowSolver(mesh, flow_params, boundary_markers)
-        NS_solver.setup_solver()
-        NS_solver.solve()
-        self.vel = NS_solver.vel
+
+        NSB_solver = NavierStokesBrinkmanFlowSolver(mesh, flow_params, boundary_markers)
+        NSB_solver.setup_solver()
+        NSB_solver.solve()
+        self.vel = NSB_solver.vel
 
 
-solver = BortelsSolver()
+solver = FlowBatterySolver()
 solver.setup_solver(initial_solve=False)
 solver.solve()

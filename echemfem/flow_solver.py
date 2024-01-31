@@ -254,8 +254,7 @@ class NavierStokesBrinkmanFlowSolver(FlowSolver):
                 - 1.0/rho * p * div(v) * dx \
                 + nu * inv_K * inner(u, v) * dx \
                 + div(u) * q * dx
-                #- inner(u, grad(q)) * dx
-                # this sets u.n = 0 on Neumann BCs
+                # - inner(u, grad(q)) * dx # does this sets u.n = 0 on Neumann BCs?
             if self.boundary_markers.get("inlet pressure"):
                 n = FacetNormal(self.mesh)
                 in_id = self.boundary_markers["inlet pressure"]
