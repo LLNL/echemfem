@@ -2037,56 +2037,57 @@ class EchemSolver(ABC):
             i_el = None
             rang = range(self.num_liquid)
         # Do eliminated concentration last
-        if not solid and self.flow["migration"]:
+        if not solid:
         # If electroneutral, this one is used for potential initial guess
         # If using Poisson, this includes some things for the "true" Poisson equation
             for i in rang:
-                z = conc_params[i]["z"]
-                if not i == i_el:
-                    C = u[conc_params[i]["i_c"]]
-                    C_n += z * C  # electroneutrality constraint
-                else:
-                    C = -C_n / z
-                if (bulk_reaction is not None) and (
-                        not solid) and self.flow["electroneutrality"]:
-                    if reactions[i] != 0.0:
-                        a -= z * F * reactions[i] * \
-                            test_fn * self.dx(domain=self.mesh)
+                z = conc_params[i].get("z")
+                if z is not None:
+                    if not i == i_el:
+                        C = u[conc_params[i]["i_c"]]
+                        C_n += z * C  # electroneutrality constraint
+                    else:
+                        C = -C_n / z
+                    if (bulk_reaction is not None) and (
+                            not solid) and self.flow["electroneutrality"]:
+                        if reactions[i] != 0.0:
+                            a -= z * F * reactions[i] * \
+                                test_fn * self.dx(domain=self.mesh)
 
-                neumann = self.boundary_markers.get("neumann")
-                if (neumann is not None) and (z != 0.0) and eps_r is None and eps_0 is None:
-                    a -= z * F * test_fn * \
-                        self.neumann(C, conc_params[i], u) * self.ds(neumann)
-                if not solid and z != 0:
-                    D = conc_params[i]["diffusion coefficient"]
-                    if self.flow["porous"]:
-                        D = self.effective_diffusion(D)
-                    if (eps_r is None or eps_0 is None) and \
-                       self.physical_params.get("liquid conductivity") is None:
-                        K_U += z**2 * F**2 * D * C / R / T
-                    elif z != 0.0:
-                        # right-hand side of true Poisson equation
-                        a -= F * z * C * test_fn * self.dx()
+                    neumann = self.boundary_markers.get("neumann")
+                    if (neumann is not None) and (z != 0.0) and self.flow["electroneutrality"]:
+                        a -= z * F * test_fn * \
+                            self.neumann(C, conc_params[i], u) * self.ds(neumann)
+                    if not solid and z != 0:
+                        D = conc_params[i]["diffusion coefficient"]
+                        if self.flow["porous"]:
+                            D = self.effective_diffusion(D)
+                        if (eps_r is None or eps_0 is None) and \
+                           self.physical_params.get("liquid conductivity") is None:
+                            K_U += z**2 * F**2 * D * C / R / T
+                        elif z != 0.0 and eps_r:
+                            # right-hand side of true Poisson equation
+                            a -= F * z * C * test_fn * self.dx()
 
-                    # Echem reaction for charge-conservation eqn
-                    if not self.flow["poisson"]:
-                        name = conc_params[i]["name"]
-                        if not self.flow["porous"]:
-                            for echem in self.echem_params:
-                                electrode = self.boundary_markers.get(
-                                    echem["boundary"])
-                                n_ = echem["electrons"]
-                                if name in echem["stoichiometry"]:
-                                    nu = echem["stoichiometry"][name]
-                                    a -= test_fn * z * nu / n_ * \
-                                        echem["reaction"](u) * self.ds(electrode)
-                        else:
-                            for echem in self.echem_params:
-                                n_ = echem["electrons"]
-                                if name in echem["stoichiometry"]:
-                                    nu = echem["stoichiometry"][name]
-                                    a -= av * test_fn * z * nu / n_ * \
-                                        echem["reaction"](u) * self.dx()
+                        # Echem reaction for charge-conservation eqn
+                        if not self.flow["poisson"]:
+                            name = conc_params[i]["name"]
+                            if not self.flow["porous"]:
+                                for echem in self.echem_params:
+                                    electrode = self.boundary_markers.get(
+                                        echem["boundary"])
+                                    n_ = echem["electrons"]
+                                    if name in echem["stoichiometry"]:
+                                        nu = echem["stoichiometry"][name]
+                                        a -= test_fn * z * nu / n_ * \
+                                            echem["reaction"](u) * self.ds(electrode)
+                            else:
+                                for echem in self.echem_params:
+                                    n_ = echem["electrons"]
+                                    if name in echem["stoichiometry"]:
+                                        nu = echem["stoichiometry"][name]
+                                        a -= av * test_fn * z * nu / n_ * \
+                                            echem["reaction"](u) * self.dx()
         if solid:
             for echem in self.echem_params:
                 a += av * test_fn * echem["reaction"](u) * self.dx()
