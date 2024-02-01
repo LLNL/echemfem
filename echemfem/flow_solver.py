@@ -7,18 +7,19 @@ class FlowSolver(ABC):
     """Base class for a flow solver.
 
     This class is used to create solvers for fluid flow decoupled from the chemistry
+
     Attributes:
         mesh (:class:`firedrake.mesh.MeshGeometry`): Mesh object from firedrake
-        flow_params (dict): Dictionary containing physical parameters 
+        fluid_params (dict): Dictionary containing physical parameters 
         boundary_markers (dict): Dictionary where the keys are :py:class:`str:`
-        representing the type of boundary condition, and the values are
-        :py:class:`tuple` containing the boundary indices. For example :
+            representing the type of boundary condition, and the values are
+            :py:class:`tuple` containing the boundary indices. For example :
 
-        .. code-block::
+            .. code-block::
 
-            self.boundary_markers = {"inlet velocity": (1,)}
+                boundary_markers = {"inlet velocity": (1,)}
 
-        sets the boundary condition ``"inlet velocity"`` on boundary 1.
+            sets the boundary condition ``"inlet velocity"`` on boundary 1.
     """
 
     def __init__(self, mesh, fluid_params, boundary_markers):
@@ -174,6 +175,7 @@ class NavierStokesFlowSolver(FlowSolver):
 
     def setup_solver(self, ksp_solver="lu"):
         """Optional PCD preconditioner for nondimensional Navier-Stokes
+
         Args:
             ksp_solver (str): ``"lu"`` or ``"pcd"``
         """
@@ -221,8 +223,9 @@ class NavierStokesBrinkmanFlowSolver(FlowSolver):
 
     """Incompressible Navier-Stokes-Brinkman solver
 
-       For dimensionless form, pass Reynolds number to fluid_params.
-       For dimensional form, pass density and kinematic viscosity.
+       For dimensionless form, pass Reynolds and Darcy numbers to fluid_params.
+       For dimensional form, pass density, permeability, and kinematic or
+       dynamic viscosity.
     """
     def setup_problem(self):
         u = self.u

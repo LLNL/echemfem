@@ -59,3 +59,11 @@ For transient cases, a temporal grid defined as a  ``list`` or
    import numpy as np
    times = np.linspace(0, 11, 1)  # 10 timesteps of size 0.1
    solver.solve(times)
+
+To generate non-trivial velocity fields, some fluid flow solvers are available:
+
+.. toctree::
+   :maxdepth: 2
+
+   fluid_solver
+
