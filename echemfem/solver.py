@@ -211,7 +211,8 @@ class EchemSolver(ABC):
             return _dx(
                 subdomain_id=subdomain_id,
                 domain=domain,
-                scheme=quadrature_rule)
+                scheme=quadrature_rule,
+                degree=p+1)
 
         if mesh.layers:
             # This doesn't include top and bottom surfaces
@@ -219,26 +220,31 @@ class EchemSolver(ABC):
                 return ds_v(
                     subdomain_id=subdomain_id,
                     domain=domain,
-                    scheme=quadrature_rule_face)
+                    scheme=quadrature_rule_face,
+                    degree=p+1)
 
             def _internal_dS(subdomain_id=None, domain=None):
                 return dS_v(subdomain_id=subdomain_id,
                             domain=domain,
-                            scheme=quadrature_rule_face) + dS_h(subdomain_id=subdomain_id,
+                            scheme=quadrature_rule_face,
+                            degree=p+1) + dS_h(subdomain_id=subdomain_id,
                                                                 domain=domain,
-                                                                scheme=quadrature_rule_face)
+                                                                scheme=quadrature_rule_face,
+                                                                degree=p+1)
         else:
             def _internal_ds(subdomain_id=None, domain=None):
                 return _ds(
                     subdomain_id=subdomain_id,
                     domain=domain,
-                    scheme=quadrature_rule_face)
+                    scheme=quadrature_rule_face,
+                    degree=p+1)
 
             def _internal_dS(subdomain_id=None, domain=None):
                 return _dS(
                     subdomain_id=subdomain_id,
                     domain=domain,
-                    scheme=quadrature_rule_face)
+                    scheme=quadrature_rule_face,
+                    degree=p+1)
 
         self.ds = _internal_ds
         self.dx = _internal_dx
