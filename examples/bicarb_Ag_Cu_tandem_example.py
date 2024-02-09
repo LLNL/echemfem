@@ -71,6 +71,7 @@ F = 96485.33289     # Faraday's constant (C/mol)
 
 #other constants
 cref = 1 # reference concentration (mol/m^3)
+cref_Ag = 1e3 #reference concentration for Ag Tafel (mol/m^3)
 #---------------------------------------------------------------------------
 #end ofconstants, operating conditions, extraneous values used
 
@@ -148,7 +149,7 @@ class CarbonateSolver(EchemSolver):
         
         
         mesh = Mesh('mesh_bicarb_tandem_example.msh')
-
+        #Note: will need to use "gmsh -2 mesh_bicarb_tandem_example.geo" command to convert to .msh format
 
 
         #---------------------------------------------------
@@ -352,15 +353,15 @@ class CarbonateSolver(EchemSolver):
             f_OH = pow(10.,-0.51 * pow(z_OH,2) * (pow(I,0.5)/(1. + pow(I,0.5)) - 0.3 * I ) )
             f_H = pow(10.,-0.51 * pow(z_H,2) * (pow(I,0.5)/(1. + pow(I,0.5)) - 0.3 * I ) )
 
-            a_OH = f_OH * COH / cref
-            a_OH_bulk = C_OH_bulk / cref
+            a_OH = f_OH * COH / cref_Ag
+            a_OH_bulk = C_OH_bulk / cref_Ag
 
-            a_H = f_H * CH / cref
+            a_H = f_H * CH / cref_Ag
             pH = -ln(a_H)/ln(10)
 
             f_CO2 = exp(COH*(h_s_OH+h_g_CO2) + CHCO3*(h_s_HCO3+h_g_CO2) + CCO3*(h_s_CO3+h_g_CO2) + CH*(h_s_H+h_g_CO2) + CK*(h_s_K+h_g_CO2))
-            a_CO2 = f_CO2 * CCO2 / cref
-            a_CO2_bulk = C_CO2_bulk / cref 
+            a_CO2 = f_CO2 * CCO2 / cref_Ag
+            a_CO2_bulk = C_CO2_bulk / cref_Ag
 
             ##-------------------------end of calculate activities            
 
@@ -402,10 +403,10 @@ class CarbonateSolver(EchemSolver):
             f_OH = pow(10.,-0.51 * pow(z_OH,2) * (pow(I,0.5)/(1. + pow(I,0.5)) - 0.3 * I ) )
             f_H = pow(10.,-0.51 * pow(z_H,2) * (pow(I,0.5)/(1. + pow(I,0.5)) - 0.3 * I ) )
 
-            a_OH = f_OH * COH / cref
-            a_OH_bulk = C_OH_bulk / cref
+            a_OH = f_OH * COH / cref_Ag
+            a_OH_bulk = C_OH_bulk / cref_Ag
 
-            a_H = f_H * CH / cref
+            a_H = f_H * CH / cref_Ag
             pH = -ln(a_H)/ln(10)
 
             ##-------------------------end of calculate activities 
@@ -509,7 +510,7 @@ solver.solve()
 cCO2, cOH, cHCO3, cCO3, cH, cH2, cCO, cC2H4, cC2H6O, phi2 = solver.u.split()
 
 
-Vlist = np.linspace(-0.5,-1.5,num=21)
+Vlist = np.linspace(-0.5,-1.3,num=17)
 jCO = []
 jH2_Ag = []
 jC2H4 = []

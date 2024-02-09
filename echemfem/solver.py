@@ -211,7 +211,8 @@ class EchemSolver(ABC):
             return _dx(
                 subdomain_id=subdomain_id,
                 domain=domain,
-                scheme=quadrature_rule)
+                scheme=quadrature_rule,
+                degree=p+1)
 
         if mesh.layers:
             # This doesn't include top and bottom surfaces
@@ -219,26 +220,31 @@ class EchemSolver(ABC):
                 return ds_v(
                     subdomain_id=subdomain_id,
                     domain=domain,
-                    scheme=quadrature_rule_face)
+                    scheme=quadrature_rule_face,
+                    degree=p+1)
 
             def _internal_dS(subdomain_id=None, domain=None):
                 return dS_v(subdomain_id=subdomain_id,
                             domain=domain,
-                            scheme=quadrature_rule_face) + dS_h(subdomain_id=subdomain_id,
+                            scheme=quadrature_rule_face,
+                            degree=p+1) + dS_h(subdomain_id=subdomain_id,
                                                                 domain=domain,
-                                                                scheme=quadrature_rule_face)
+                                                                scheme=quadrature_rule_face,
+                                                                degree=p+1)
         else:
             def _internal_ds(subdomain_id=None, domain=None):
                 return _ds(
                     subdomain_id=subdomain_id,
                     domain=domain,
-                    scheme=quadrature_rule_face)
+                    scheme=quadrature_rule_face,
+                    degree=p+1)
 
             def _internal_dS(subdomain_id=None, domain=None):
                 return _dS(
                     subdomain_id=subdomain_id,
                     domain=domain,
-                    scheme=quadrature_rule_face)
+                    scheme=quadrature_rule_face,
+                    degree=p+1)
 
         self.ds = _internal_ds
         self.dx = _internal_dx
@@ -486,7 +492,7 @@ class EchemSolver(ABC):
         print("Species information")
         for c in self.conc_params:
             print("> {}".format(c["name"]))
-            if self.flow["electroneutrality"] or self.flow["poisson"] or self.flow["electroneutrality full"]:
+            if self.flow["electroneutrality"] or (self.flow["poisson"] and self.flow["migration"]) or self.flow["electroneutrality full"]:
                 print("  z = {}".format(c["z"]))
 
         print("Solver information")
@@ -815,6 +821,9 @@ class EchemSolver(ABC):
         if self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]:
             collection.append(Function(self.Vu,
                               name="Liquid Potential").assign(uviz[self.num_mass]))
+            if self.flow["porous"]:
+                collection.append(Function(self.Vu,
+                                  name="Solid Potential").assign(uviz[self.i_Us]))
 
         if self.flow["electroneutrality"]:
             C_el = 0.0
@@ -1425,8 +1434,9 @@ class EchemSolver(ABC):
 
         if self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]:
             U = u[self.i_Ul]
-            z = conc_params["z"]
+        if self.flow["migration"]:
             F = self.physical_params["F"]
+            z = conc_params["z"]
             R = self.physical_params["R"]
             T = self.physical_params["T"]
             K = D * z * F / R / T
@@ -2010,6 +2020,10 @@ class EchemSolver(ABC):
         if not solid:
             if eps_r is not None and eps_0 is not None:
                 K_U = eps_r * eps_0
+            elif self.physical_params.get("liquid conductivity"):
+                K_U = self.physical_params["liquid conductivity"]
+                if self.flow["porous"]:
+                    K_U = self.effective_diffusion(K_U, phase="liquid")
             else:
                 K_U = 0.0
 
@@ -2029,54 +2043,64 @@ class EchemSolver(ABC):
             i_el = None
             rang = range(self.num_liquid)
         # Do eliminated concentration last
-        for i in rang:
-            z = conc_params[i]["z"]
-            if not i == i_el:
-                C = u[conc_params[i]["i_c"]]
-                C_n += z * C  # electroneutrality constraint
-            else:
-                C = -C_n / z
-            if (bulk_reaction is not None) and (
-                    not solid) and self.flow["electroneutrality"]:
-                if reactions[i] != 0.0:
-                    a -= z * F * reactions[i] * \
-                        test_fn * self.dx(domain=self.mesh)
+        if not solid:
+        # If electroneutral, this one is used for potential initial guess
+        # If using Poisson, this includes some things for the "true" Poisson equation
+            for i in rang:
+                z = conc_params[i].get("z")
+                if z is not None:
+                    if not i == i_el:
+                        C = u[conc_params[i]["i_c"]]
+                        C_n += z * C  # electroneutrality constraint
+                    else:
+                        C = -C_n / z
+                    if (bulk_reaction is not None) and (
+                            not solid) and self.flow["electroneutrality"]:
+                        if reactions[i] != 0.0:
+                            a -= z * F * reactions[i] * \
+                                test_fn * self.dx(domain=self.mesh)
 
-            neumann = self.boundary_markers.get("neumann")
-            if (neumann is not None) and (z != 0.0) and eps_r is None and eps_0 is None:
-                a -= z * F * test_fn * \
-                    self.neumann(C, conc_params[i], u) * self.ds(neumann)
-            if not solid and z != 0:
-                D = conc_params[i]["diffusion coefficient"]
-                if self.flow["porous"]:
-                    D = self.effective_diffusion(D)
-                if eps_r is None or eps_0 is None:
-                    K_U += z**2 * F**2 * D * C / R / T
-                elif z != 0.0:
-                    a -= F * z * C * test_fn * self.dx()
+                    neumann = self.boundary_markers.get("neumann")
+                    if (neumann is not None) and (z != 0.0) and self.flow["electroneutrality"]:
+                        a -= z * F * test_fn * \
+                            self.neumann(C, conc_params[i], u) * self.ds(neumann)
+                    if not solid and z != 0:
+                        D = conc_params[i]["diffusion coefficient"]
+                        if self.flow["porous"]:
+                            D = self.effective_diffusion(D)
+                        if (eps_r is None or eps_0 is None) and \
+                           self.physical_params.get("liquid conductivity") is None:
+                            K_U += z**2 * F**2 * D * C / R / T
+                        elif z != 0.0 and eps_r:
+                            # right-hand side of true Poisson equation
+                            a -= F * z * C * test_fn * self.dx()
 
-                # Echem reaction
-                name = conc_params[i]["name"]
-                if not self.flow["porous"]:
-                    for echem in self.echem_params:
-                        electrode = self.boundary_markers.get(
-                            echem["boundary"])
-                        n_ = echem["electrons"]
-                        if name in echem["stoichiometry"]:
-                            nu = echem["stoichiometry"][name]
-                            a -= test_fn * z * nu / n_ * \
-                                echem["reaction"](u) * self.ds(electrode)
-                else:
-                    for echem in self.echem_params:
-                        n_ = echem["electrons"]
-                        if name in echem["stoichiometry"]:
-                            nu = echem["stoichiometry"][name]
-                            a -= av * test_fn * z * nu / n_ * \
-                                echem["reaction"](u) * self.dx()
-
+                        # Echem reaction for charge-conservation eqn
+                        if not self.flow["poisson"]:
+                            name = conc_params[i]["name"]
+                            if not self.flow["porous"]:
+                                for echem in self.echem_params:
+                                    electrode = self.boundary_markers.get(
+                                        echem["boundary"])
+                                    n_ = echem["electrons"]
+                                    if name in echem["stoichiometry"]:
+                                        nu = echem["stoichiometry"][name]
+                                        a -= test_fn * z * nu / n_ * \
+                                            echem["reaction"](u) * self.ds(electrode)
+                            else:
+                                for echem in self.echem_params:
+                                    n_ = echem["electrons"]
+                                    if name in echem["stoichiometry"]:
+                                        nu = echem["stoichiometry"][name]
+                                        a -= av * test_fn * z * nu / n_ * \
+                                            echem["reaction"](u) * self.dx()
         if solid:
             for echem in self.echem_params:
                 a += av * test_fn * echem["reaction"](u) * self.dx()
+        elif not solid and self.flow["poisson"]:
+            for echem in self.echem_params:
+                a -= av * test_fn * echem["reaction"](u) * self.dx()
+
 
         # diffusion of potential
         a += inner(K_U * grad(U), grad(test_fn)) * self.dx()
@@ -2126,6 +2150,12 @@ class EchemSolver(ABC):
                 bcs.append(DirichletBC(self.W.sub(i_u), U_0, dirichlet))
             else:
                 bcs.append(DirichletBC(W.sub(i_bc), U_0, dirichlet))  # for initial guess
+
+        I_app = self.physical_params.get("applied current density")
+        if self.boundary_markers.get("applied solid current") and solid:
+            a -= I_app * test_fn * self.ds(self.boundary_markers["applied solid current"])
+        if self.boundary_markers.get("applied liquid current") and not solid:
+            a -= I_app * test_fn * self.ds(self.boundary_markers["applied liquid current"])
 
         if robin is not None:
             U_0 = self.U_app
