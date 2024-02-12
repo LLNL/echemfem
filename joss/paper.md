@@ -15,6 +15,9 @@ authors:
     affiliation: 1
   - name: Aymeric Antimes
     affiliation: 2
+  - name: Victor A. Beck
+    orcid: 0000-0002-0625-9545
+    affiliation: 1
   - name: Victoria Ehlinger
     orcid: 0000-0001-7333-1271
     affiliation: 1
@@ -80,18 +83,18 @@ This balance between usability and scalability permits a seamless transition fro
 EchemFEM leverages Firedrake's capabilities while further increasing the ease-of-use.
 Indeed, since the governing equations are already implemented, little to no knowledge of Firedrake and the finite element method is required to use EchemFEM.
 
-The repository includes several examples about electrochemical devices such as flow reactors, flow batteries, and CO2 electrolyzers.
+The repository includes several examples of electrochemical devices such as flow reactors, flow batteries, and CO2 electrolyzers.
 
 # Statement of need
 <!--- section that clearly illustrates the research purpose of the software and places it in the context of related work --->
 <!--- Research Need --->
 Electrochemical phenomena are highly complex, making characterization of electrochemical devices through experiments challenging.
-Simulation is an important tool for the understanding of electrochemistry, and for predicting the performance as well as designing electrochemical devices.
+Simulation is an important tool for predicting the performance of electrochemical devices, as well as designing them.
 As technologies get scaled up from the laboratory scale to industrial scale, experiments become less tractable and therefore simulation increasingly important.
 Naturally, the scalability of simulators is crucial.
 Furthermore, many existing models and codes are just one dimensional.
 To capture the effects of fluid flow and non-monolithic, architected electrodes, higher-dimensional effects do matter.
-For three-dimensional systems, iterative methods are required to maintain scalability.
+For three-dimensional systems, iterative methods and appropriate preconditioners are required to maintain scalability.
 
 <!--- Other codes --->
 Currently, commercial software are the most commonly used codes for electrochemistry simulations
@@ -110,7 +113,8 @@ One such package, PyBaMM [@sulzer2021python], is a battery modelling code with a
 <!--- Why echemfem --->
 EchemFEM provides a general framework for simulating electrochemical transport: it is not specific to an application.
 Since it is based on Firedrake, any additional physics that can be implemented in a finite element framework can be coupled to EchemFEM.
-In one of the demos, the incompressible Navier-Stokes equations are solved in a reactor with an irregular surface, providing a velocity field for the transport equations. Similarly, in a flow battery examples, the Navier-Stokes-Brinkman equations are solved.
+In one of the demos, the incompressible Navier-Stokes equations are solved in a reactor with an irregular surface, providing a velocity field for the transport equations.
+Similarly, in a flow battery example, the Navier-Stokes-Brinkman equations are solved.
 
 In some cases, for example for fast flows, stabilization schemes that are not offered in other software may be required.
 For continuous Galerkin (CG) elements, a streamline-upwind Petrov-Galerkin (SUPG) method for the Nernst-Planck equation is provided.
