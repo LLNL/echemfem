@@ -97,7 +97,7 @@ To capture the effects of fluid flow and non-monolithic, architected electrodes,
 For three-dimensional systems, iterative methods and appropriate preconditioners are required to maintain scalability.
 
 <!--- Other codes --->
-Currently, commercial software are the most commonly used codes for electrochemistry simulations
+Currently, commercial software are the most commonly used codes for electrochemistry simulations.
 COMSOL Multiphysics<sup>&reg;</sup>, with its detailed electrochemistry module, is the most popular, while Simcenter<sup>&trade;</sup> STAR-CCM+<sup>&trade;</sup> is also used commonly for flowing systems.
 These programs provide simple graphical user interfaces (GUI), which allow users to quickly set up new simulations.
 Additionally, other physics modules such as fluid dynamics are available and can usually be coupled with the electrochemistry simulation.
