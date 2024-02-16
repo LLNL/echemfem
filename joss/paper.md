@@ -118,7 +118,7 @@ Similarly, in a flow battery example, the Navier-Stokes-Brinkman equations are s
 
 In some cases, for example for fast flows, stabilization schemes that are not offered in other software may be required.
 For continuous Galerkin (CG) elements, a streamline-upwind Petrov-Galerkin (SUPG) method for the Nernst-Planck equation is provided.
-For discontinuous Galerking (DG), a custom upwind scheme for the Nernst-Planck equation is used [@roy2023scalable].
+For discontinuous Galerkin (DG), a custom upwind scheme for the Nernst-Planck equation is used [@roy2023scalable].
 In both cases, the upwinding considers the combined advection-migration ``velocity''.
 
 As opposed to commercial software, custom scalable solvers are available in Firedrake.
