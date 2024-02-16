@@ -25,18 +25,19 @@ bibliography: paper.bib
 # Summary
 <!---  high-level functionality and purpose of the software for a diverse, non-specialist audience --->
 <!--- motivation --->
-The shift from fossil fuels towards renewable energy brings about a substantial increase in clean but intermittent electricity.
-Thankfully, diverse electrochemical technologies, including energy storage and electrochemical manufacturing, can harness this surplus energy that would otherwise go to waste.
+The shift from fossil fuels towards renewable energy has brought about a rapid increase in the availability of clean electricity. 
+However, electricity generated from sources such as wind and solar are limited to intermittent operation due to daily and seasonal variation. 
+One solution is to utilize electrochemical devices in energy storage and electrochemical manufacturing applications, where they can harness surplus energy that would otherwise go to waste and decarbonize chemical industries traditionally reliant on petrochemical feedstocks. 
 Managing the growing prevalence of renewable energy underscores the importance of developing and scaling up these technologies.
 Likewise, the electrification of transport creates an increasing need for efficient electrochemical energy storage devices such as batteries and supercapacitors.
 Naturally, simulation tools are required to assist in the design of efficient and industrial-scale electrochemical devices.
 
 <!--- How modeling is used --->
 Modeling and simulation are used extensively to describe the physics of the electrochemical and transport mechanisms in electrochemical devices.
-These devices have various applications, such as batteries and supercapacitors, which are used for energy storage.
-Flow batteries have a similar function, but with a flowing electrolyte.
-Electrolyzers can be used to transform carbon dioxide into useful products or create hydrogen from water.
-Proton-exchange membrane fuel cells reverse this process to harness electricity from hydrogen.
+These devices have various applications, from miniaturized lithium-ion batteries for medical devices up to industrial-scale hydrogen fuel cells which act as backup power sources. Energy storage devices include batteries and supercapacitors, as well as flow batteries which utilize a flowing electrolyte.
+Electrolyzers are devices which use electrical energy to perform electrochemical reactions. Some current industrial applications for electrolysis include the color-alkali process for the production of chlorine gas and the Hall-Héroult process for aluminum production. Active areas of research include the development of electrolyzers that can be used to transform carbon dioxide into useful chemicals and to create hydrogen from water.
+In the reverse process, fuel cells use fuels such as hydrogen to generate electricity.
+
 While these devices vary wildly in purpose, the governing equations used to describe them are very similar.
 Transport of charged chemical species in a fluid is often modeled using the Nernst-Planck equation,
 which includes the usual advection and diffusion transport as well as *electromigration*, where charged species are transported by an electric field.
