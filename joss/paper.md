@@ -63,7 +63,7 @@ Modeling and simulation are used extensively to describe the physics of the elec
 These devices have many applications, from miniaturized lithium-ion batteries for medical devices up to industrial-scale hydrogen fuel cells for backup power generation.
 Energy storage devices include batteries and supercapacitors, as well as flow batteries which utilize a flowing electrolyte instead of a stationary liquid or polymer electrolyte.
 Electrolyzers are devices, which use electrical energy to perform electrochemical reactions.
-Some current industrial applications for electrolysis include the color-alkali process for the production of chlorine gas and the Hall-Héroult process for aluminum production.
+Some current industrial applications for electrolysis include the chlor-alkali process for the production of chlorine gas and the Hall-Héroult process for aluminum production.
 Active areas of research include the development of electrolyzers that transform carbon dioxide into useful chemicals and electrolyzers that create hydrogen from water.
 In the reverse process, fuel cells use fuels such as hydrogen to generate electricity.
 While electrochemical devices span many scales and industries, the governing equations and underlying physical phenomena remain similar.
@@ -116,6 +116,7 @@ Finally, since everything needs to be set up through the GUI, scripting and coup
 
 There is a growing number of open-source software for electrochemistry, especially Python-based packages [@zheng2023python], many of which are specialized for specific applications, notably batteries.
 One such package, PyBaMM [@sulzer2021python], is a battery modelling code with a flexible implementation, allowing for new models and numerical methods to be tested.
+OpenFOAM [@openfoamwebsite] is a popular tool that is mainly used for computational fluid dynamics, but implementation of custom transport mechanisms, such as those from electrochemistry, can have a steep learning curve.
 
 <!--- Why echemfem --->
 EchemFEM provides a general framework for simulating electrochemical transport: it is not specific to an application.
