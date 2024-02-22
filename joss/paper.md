@@ -70,10 +70,12 @@ While electrochemical devices span many scales and industries, the governing equ
 
 The transport of charged chemical species in a fluid is often modeled using the Nernst-Planck equation,
 which includes the usual advection and diffusion transport as well as *electromigration*, where charged species are transported by an electric field.
+Often, these species are also undergoing reactions either in the bulk fluid or on the boundaries.
 
 <!--- EchemFEM --->
 EchemFEM provides a high-level user interface for a finite element implementation of the Nernst-Planck equation.
 The user is simply required to provide physical parameters as well as functions describing the chemical reactions.
+The mesh can be defined using either built-in functions for simple geometries, or imported from external packages, such as Gmsh [@geuzaine2009gmsh], for more complex geometries.
 Then, the desired transport physics are selected using keyword arguments.
 Ionic charge can be modeled using either the Poisson equation or the electroneutrality approximation.
 The simulated devices can have resolved electrolyte-electrode interfaces or homogenized porous electrodes, in which case electron conduction is also modeled.
@@ -114,6 +116,7 @@ Finally, since everything needs to be set up through the GUI, scripting and coup
 
 There is a growing number of open-source software for electrochemistry, especially Python-based packages [@zheng2023python], many of which are specialized for specific applications, notably batteries.
 One such package, PyBaMM [@sulzer2021python], is a battery modelling code with a flexible implementation, allowing for new models and numerical methods to be tested.
+OpenFOAM [@openfoamwebsite] is a popular tool that is mainly used for computational fluid dynamics, but implementation of custom transport mechanisms, such as those from electrochemistry, can have a steep learning curve.
 
 <!--- Why echemfem --->
 EchemFEM provides a general framework for simulating electrochemical transport: it is not specific to an application.
