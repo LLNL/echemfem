@@ -38,7 +38,7 @@ authors:
 affiliations:
  - name: Lawrence Livermore National Laboratory, CA, USA
    index: 1
- - name: Institution Name, Country
+ - name: TotalEnergies OneTech, France
    index: 2
  - name: Queensland University of Technology, Australia
    index: 3
@@ -53,7 +53,7 @@ bibliography: paper.bib
 The transition from fossil fuels to renewable energy has brought about a rapid increase in the availability of clean electricity.
 However, electricity generated from sources such as wind and solar are limited to intermittent operation due to daily and seasonal variation.
 One solution is to utilize electrochemical devices in energy storage and electrochemical manufacturing applications, where they can harness surplus energy and decarbonize chemical industries traditionally reliant on petrochemical feedstocks.
-Managing the growing prevalence of renewable energy underscores the importance of developing and scaling up these technologies.
+Managing the growing prevalence of renewable energy underscores the importance of developing and scaling up these technologies, which can in turn facilitate the achievement of carbon emission reduction commitments of companies and developed economies.
 Likewise, the electrification of transport creates an increasing need for energy-dense electrochemical energy storage devices such as batteries and supercapacitors.
 Naturally, simulation tools are required to assist in the design of efficient and industrial-scale electrochemical devices.
 
@@ -63,8 +63,8 @@ Modeling and simulation are used extensively to describe the physics of the elec
 These devices have many applications, from miniaturized lithium-ion batteries for medical devices up to industrial-scale hydrogen fuel cells for backup power generation.
 Energy storage devices include batteries and supercapacitors, as well as flow batteries, which utilize a flowing electrolyte instead of a stationary liquid or polymer electrolyte.
 Electrolyzers are devices that use electrical energy to perform electrochemical reactions.
-Some current industrial applications for electrolysis include the color-alkali process for the production of chlorine gas and the Hall-Héroult process for aluminum production.
-Active areas of research include the development of electrolyzers that transform carbon dioxide into useful chemicals and electrolyzers that create hydrogen from water.
+Some current industrial applications for electrolysis include the chlor-alkali process for the production of chlorine gas and the Hall-Héroult process for aluminum production.
+Active areas of research include the development of electrolyzers that transform carbon dioxide into useful chemicals such as base molecules for sustainable aviation fuels or the chemical industry, as well as electrolyzers that create hydrogen from water.
 In the reverse process, fuel cells use fuels such as hydrogen to generate electricity.
 While electrochemical devices span many scales and industries, the governing equations and underlying physical phenomena remain similar.
 
@@ -74,7 +74,7 @@ Often, these species are also undergoing reactions either in the bulk fluid or o
 
 <!--- EchemFEM --->
 EchemFEM provides a high-level user interface for a finite element implementation of the Nernst-Planck equation.
-The user is simply required to provide physical parameters as well as functions describing the chemical reactions.
+The user is simply required to provide physical parameters as well as functions describing the chemical reactions (charge-transfer or bulk reactions).
 The mesh can be defined using either built-in functions for simple geometries, or imported from external packages, such as Gmsh [@geuzaine2009gmsh], for more complex geometries.
 Then, the desired transport physics are selected using keyword arguments.
 Ionic charge can be modeled using either the Poisson equation or the electroneutrality approximation.
@@ -96,7 +96,7 @@ The repository includes several examples of electrochemical devices such as flow
 <!--- section that clearly illustrates the research purpose of the software and places it in the context of related work --->
 <!--- Research Need --->
 Electrochemical phenomena are highly complex, making characterization of electrochemical devices through in-operando experiments challenging.
-Simulation is an important tool for predicting the performance of electrochemical devices, as well as designing them.
+Simulation is an important tool for predicting the performance of electrochemical devices, as well as assisting in their design.
 As technologies get scaled up from the laboratory scale to industrial scale, experiments become less tractable and therefore simulation increasingly important.
 Naturally, the scalability of simulators is crucial.
 Furthermore, many existing models and codes are just one dimensional.
