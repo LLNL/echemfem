@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from echemfem import EchemSolver
 import numpy as np
 import csv
+import pdb
 """
 Model fromn
 Corral D, Lee DU, Ehlinger VM, Nitopi S, Acosta JE, Wang L, King AJ, Feaster JT, 
@@ -42,14 +43,14 @@ U0HER = 0.0         # standard potential (V)
 cref = 1e3          # reference concentration (mol/m3)
 Lelec = 7e-3        # electrode thickness (m)
 Aelec = 1.44e-4     # electrode cross-sectional area (m2)
-ql = 8.333e-8       # electrolyte flow rate (m3/s)
+ql = 8.333333333e-8 # electrolyte flow rate (m3/s)
 mul = 8.9e-4        # electrolyte viscosity (Pa*s)
 rhol = 1000         # electrolyte density (kg/m3)
 nul = ql / Aelec    # electrolyte flow velocity (m/s)
 
 # diffusion coefficients (m2/s)
 # [CO2 OH- H+ CO32- HCO3- K+]
-D = [1.910e-9, 1.185e-9, 9.311e-9, 0.923e-9, 1.185e-9, 1.957e-9]
+D = [1.910e-9, 5.293e-9, 9.311e-9, 0.923e-9, 1.185e-9, 1.957e-9]
 
 # mass transfer coefficients
 kMT = []
@@ -91,7 +92,6 @@ c0HCO3b = c0Hb*c0CO3b/K2
 c0CO2b = H_CO2
 cb = np.array([c0CO2b, c0OHb, c0Hb, c0CO3b, c0HCO3b, cKb])
 
-
 class PorousSolver(EchemSolver):
     def __init__(self):
 
@@ -131,7 +131,7 @@ class PorousSolver(EchemSolver):
 
             UCO2RR = U0CO2RR + ((R * T) / F) * ln(CH / cref)
             etaCO2RR = Phi1 - Phi2 - UCO2RR  # reaction overpotential (V)
-            iCO2RR = i0CO2RR * exp(-((alphacCO2RR * F) / (R * T)) * etaCO2RR)
+            iCO2RR = -i0CO2RR * exp(-((alphacCO2RR * F) / (R * T)) * etaCO2RR)
             return iCO2RR
 
         def reaction_HER(u):
@@ -140,10 +140,17 @@ class PorousSolver(EchemSolver):
             Phi2 = u[5]
             UHER = U0HER + ((R * T) / F) * ln(CH / cref)
             etaHER = Phi1 - Phi2 - UHER  # reaction overpotential (V)
-            iHER = i0HER * exp(-((alphacHER * F) / (R * T)) * etaHER)
+            iHER = -i0HER * exp(-((alphacHER * F) / (R * T)) * etaHER)
             return iHER
 
-        mesh = IntervalMesh(500, L_CL)
+        N_c = 500 # number of elements
+        ratio = 0.1 ** (1 / (N_c - 1)) # small element is 0.1 of the largest
+        r = np.array([ratio ** (N_c-i) for i in range(N_c+1)])
+        r = r-r[0]
+        r = r/r[-1]
+        r = r * L_CL
+        mesh = IntervalMesh(N_c, L_CL)
+        mesh.coordinates.dat.data[:] = r
         conc_params = []
 
         conc_params.append({"name": "CO2",
@@ -204,13 +211,13 @@ class PorousSolver(EchemSolver):
 
         echem_params.append({"reaction": reaction_CO2RR,
                              "electrons": 6,
-                             "stoichiometry": {"CO2": -1,  # reactant
-                                               "OH": 6},  # product
+                             "stoichiometry": {"CO2": 1,  # reactant
+                                               "OH": -6},  # product
                              })
 
         echem_params.append({"reaction": reaction_HER,
                              "electrons": 2,
-                             "stoichiometry": {"OH": 2},  # product
+                             "stoichiometry": {"OH": -2},  # product
                              })
 
         super().__init__(conc_params, physical_params, mesh, echem_params=echem_params, family="CG", p=2)
@@ -224,8 +231,7 @@ class PorousSolver(EchemSolver):
 
 solver = PorousSolver()
 solver.setup_solver(initial_solve=False)
-Vlist = np.linspace(-0.70, -1.5, num=41)
-# Vlist = [-0.7]
+Vlist = np.linspace(-0.70, -1.5, num=21)
 sol = []
 icell = []
 V = solver.V
@@ -241,24 +247,19 @@ for Vs in Vlist:
 
     i1 = Function(V).interpolate(-solver.effective_diffusion(sigma_CL, phase="solid") * grad(phi1)[0])
 
-    NCO2 = Function(V).interpolate(solver.effective_diffusion(D[0])
-                                   * grad(cCO2)[0])
-    NOH = Function(V).interpolate((solver.effective_diffusion(D[1])
-                                   * grad(cOH) + F * z[1] * D[1] / R / T * cOH * grad(phi2))[0])
-    NH = Function(V).interpolate((solver.effective_diffusion(D[2])
-                                  * grad(cH) + F * z[2] * solver.effective_diffusion(D[2]) / R / T * cH
-                                  * grad(phi2))[0])
-    NCO3 = Function(V).interpolate((solver.effective_diffusion(D[3])
-                                    * grad(cCO3) + F * z[3] * solver.effective_diffusion(D[3]) / R / T
-                                    * cCO3 * grad(phi2))[0])
-    NHCO3 = Function(V).interpolate((solver.effective_diffusion(D[4])
-                                     * grad(cHCO3) + F * z[4] * solver.effective_diffusion(D[4]) / R / T
-                                     * cHCO3 * grad(phi2))[0])
-    NK = Function(V).interpolate((solver.effective_diffusion(D[5])
-                                  * grad(cK) + F * z[5] * solver.effective_diffusion(D[5]) / R / T * cK
-                                  * grad(phi2))[0])
+    NCO2 = Function(V).interpolate(solver.effective_diffusion(D[0]) * grad(cCO2)[0])
+    NOH = Function(V).interpolate((solver.effective_diffusion(D[1])* grad(cOH) + 
+                                (F /(R*T)) * z[1] * solver.effective_diffusion(D[1]) * cOH * grad(phi2))[0])
+    NH = Function(V).interpolate((solver.effective_diffusion(D[2])* grad(cH) + 
+                                (F /(R*T)) * z[2] * solver.effective_diffusion(D[2]) * cH * grad(phi2))[0])
+    NCO3 = Function(V).interpolate((solver.effective_diffusion(D[3])* grad(cCO3) + 
+                                (F /(R*T)) * z[3] * solver.effective_diffusion(D[3]) * cCO3 * grad(phi2))[0])
+    NHCO3 = Function(V).interpolate((solver.effective_diffusion(D[4]) * grad(cHCO3) + 
+                                (F /(R*T)) * z[4] * solver.effective_diffusion(D[4]) * cHCO3 * grad(phi2))[0])
+    NK = Function(V).interpolate((solver.effective_diffusion(D[5]) * grad(cK) +
+                                (F /(R*T)) * z[5] * solver.effective_diffusion(D[5]) * cK * grad(phi2))[0])
 
-    i2 = Function(V).assign(- F * (z[5] * NK + z[2] * NH + z[4] * NHCO3
+    i2 = Function(V).assign( -F * (z[5] * NK + z[2] * NH + z[4] * NHCO3
                                    + z[1] * NOH + z[3] * NCO3 + z[0] * NCO2))
 
     fig = plt.figure(constrained_layout=True, figsize=(8, 6))
@@ -337,7 +338,7 @@ for Vs in Vlist:
     i2_ = i2.dat.data
 
     Vname = np.rint(-Vs*1000)
-    filename = "echemfem_gde_data%dmV.csv" % Vname
+    filename = "results/echemfem_gde_data%dmV.csv" % Vname
     with open(filename, mode='w') as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(['x', 'i1', 'V1', 'i2', 'V2', 'cK', 'cH', 'cHCO3', 'cOH', 'cCO3', 'cCO2'])
