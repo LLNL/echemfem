@@ -25,6 +25,7 @@ To create a customized solver, the user should set the following inputs:
    physical_params
    boundary_conditions
    echem_params
+   homog_params
 
 Here is a barebone example of how a user might define their own solver.
 Several concrete examples can be found in `echemfem/examples
