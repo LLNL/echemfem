@@ -60,6 +60,7 @@ class EchemSolver(ABC):
             physical_params,
             mesh,
             echem_params=[],
+            homog_params=[],
             gas_params=[],
             stats_file="",
             overwrite_stats_file=False,
@@ -72,6 +73,7 @@ class EchemSolver(ABC):
         self.physical_params = physical_params
         self.conc_params = conc_params
         self.echem_params = echem_params
+        self.homog_params = homog_params
         self.gas_params = gas_params
         self.num_c = len(conc_params)
         self.num_g = len(gas_params)
@@ -379,6 +381,9 @@ class EchemSolver(ABC):
             self.set_darcy_velocity()
         elif self.flow["advection"]:
             self.set_velocity()
+
+        if self.homog_params:
+            self.setup_bulk_reactions()
 
         self.setup_forms(us, v)
 
@@ -1204,6 +1209,51 @@ class EchemSolver(ABC):
         solver_parameters = snes_newtonls
         solver_parameters.update(pc)
         self.solver_parameters = solver_parameters
+
+    def setup_bulk_reactions(self):
+        """ Setting up the homogeneous bulk reactions using homog_params
+
+        Setup using the law of mass action
+        """
+        def bulk_reaction(u):
+            reactions = [0] * self.num_liquid
+            reaction_f = [0] * len(self.homog_params)
+            reaction_b = [0] * len(self.homog_params)
+            for idx, reaction in enumerate(self.homog_params):
+                reaction_f[idx] = reaction["forward rate constant"]
+                if reaction.get("backward rate constant"):
+                    reaction_b[idx] = reaction["backward rate constant"]
+                else:
+                    reaction_b[idx] = reaction["forward rate constant"] / \
+                                        reaction["equilibrium constant"]
+                if reaction.get("reference concentration"):
+                    c_ref = reaction["reference concentration"]
+                else:
+                    c_ref = 1.0
+                for name in reaction["stoichiometry"]:
+                    s = reaction["stoichiometry"][name]
+                    a = u[self.i_c[name]] / c_ref
+                    if s < 0:
+                        reaction_f[idx] *= a ** (-s)
+                    if s > 0:
+                        reaction_b[idx] *= a ** s
+
+            for i in self.idx_c:
+                name = self.conc_params[i]["name"]
+                for idx, reaction in enumerate(self.homog_params):
+                    if name in reaction["stoichiometry"]:
+                        s = reaction["stoichiometry"][name]
+                        if reaction.get("reference concentration"):
+                            c_ref = reaction["reference concentration"]
+                        else:
+                            c_ref = 1.0
+                        reactions[i] += s * c_ref * (reaction_f[idx] - reaction_b[idx])
+
+            return reactions
+        if self.physical_params.get("bulk reaction"):
+            print = PETSc.Sys.Print
+            print("WARNING: Overwriting bulk reaction from physical_params with the one in homog_params")
+        self.physical_params["bulk reaction"] = bulk_reaction
 
     def effective_diffusion(self, D, phase="liquid"):
         """ Bruggeman correlation for effective diffusion in a porous medium

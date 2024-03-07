@@ -103,7 +103,7 @@ Below is a list of other keys that can appear in the dictionary
 
 * :Key: ``"bulk reaction"``
   :Type: a function
-  :Description: Homogeneous/bulk reactions to be added to the right-hand side of mass conservation equations.
+  :Description: Homogeneous/bulk reactions to be added to the right-hand side of mass conservation equations. These can instead be set using ``homog_params`` (:doc:`homog_params`).
 
     Args:
         u: solution state. The value of the different concentrations can be recovered through ``u([self.i_c["species name"])`` within a ``echemfem.EchemSolver`` object.
