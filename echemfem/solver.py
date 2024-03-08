@@ -1574,15 +1574,16 @@ class EchemSolver(ABC):
             NA = self.physical_params["Avogadro constant"]
             phi = 0.0
             a0 = 2.3e-10    # Size of water molecule
+            aj = conc_params.get("solvated diameter")
+            betaj = (aj/a0)**3
             for i in range(n_c):
                 ai = self.conc_params[i].get("solvated diameter")
                 if ai is not None and ai != 0.0:
-                    betai = (ai/a0)**3
-                    phi += betai * NA * ai ** 3 * u[i]
+                    phi += NA * ai ** 3 * u[i]
 
             # size-modified (SMPNP) correction (cf. Eq. 4 in doi:10.26434/chemrxiv-2022-h2mrp)
 
-            mu_ex = -ln(1 - phi)
+            mu_ex = - betaj * ln(1 - phi)
 
             a += D * C * inner(grad(ln(C) + mu_ex), grad(test_fn)) * self.dx()
 
