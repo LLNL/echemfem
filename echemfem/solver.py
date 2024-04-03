@@ -435,7 +435,7 @@ class EchemSolver(ABC):
         if gas_params:
             Form += self.dissolutions(us, v, conc_params, gas_params)
 
-        # TODO: bulk_reactions and dissolutions for eliminated concentrations
+        # TODO: dissolutions for eliminated concentrations
         # charge conservation
         if self.flow["electroneutrality"]:
             a, bc = self.charge_conservation_form(us,
@@ -1216,7 +1216,7 @@ class EchemSolver(ABC):
         Setup using the law of mass action
         """
         def bulk_reaction(u):
-            reactions = [0] * self.num_liquid
+            reactions = [0] * self.num_c
             reaction_f = [0] * len(self.homog_params)
             reaction_b = [0] * len(self.homog_params)
             for idx, reaction in enumerate(self.homog_params):
