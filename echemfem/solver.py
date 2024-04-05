@@ -1223,7 +1223,7 @@ class EchemSolver(ABC):
                 reaction_f[idx] = reaction["forward rate constant"]
                 if reaction.get("backward rate constant"):
                     reaction_b[idx] = reaction["backward rate constant"]
-                else:
+                elif reaction.get("equilibrium constant"):
                     reaction_b[idx] = reaction["forward rate constant"] / \
                                         reaction["equilibrium constant"]
                 if reaction.get("reference concentration"):
@@ -1232,11 +1232,15 @@ class EchemSolver(ABC):
                     c_ref = 1.0
                 for name in reaction["stoichiometry"]:
                     s = reaction["stoichiometry"][name]
+                    order = abs(s) # default
+                    if reaction.get("reaction order"):
+                        if reaction["reaction order"].get(name):
+                            order = reaction["reaction order"][name]
                     a = u[self.i_c[name]] / c_ref
                     if s < 0:
-                        reaction_f[idx] *= a ** (-s)
+                        reaction_f[idx] *= a ** order
                     if s > 0:
-                        reaction_b[idx] *= a ** s
+                        reaction_b[idx] *= a ** order
 
             for i in self.idx_c:
                 name = self.conc_params[i]["name"]

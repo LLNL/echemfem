@@ -1,4 +1,4 @@
-# import matplotlib.gridspec as gridspec
+import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 from firedrake import *
 from echemfem import EchemSolver
