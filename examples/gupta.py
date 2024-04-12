@@ -124,7 +124,7 @@ ax3.set(xlabel='distance (m)',
 plot(C_OH, axes=ax4)
 ax4.set(xlabel='distance (m)',
         ylabel='OH concentration (M)')
-plt.plot(x_bl, C_OH_bl, axes=ax5, color='k', linewidth=2)
+plt.plot(x_bl, C_OH_bl, color='k', linewidth=2)
 ax5.set(xlabel='distance (m)',
         ylabel='OH concentration (M)')
 

@@ -368,7 +368,7 @@ class EchemSolver(ABC):
                 us[self.num_liquid:self.num_liquid + self.num_gas], self.pg, gas_params)
 
         # setup applied voltage
-        if self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]:
+        if physical_params.get("U_app"):
             U_app = physical_params["U_app"]
             if isinstance(U_app, (Constant, Function)):
                 self.U_app = U_app
@@ -636,7 +636,8 @@ class EchemSolver(ABC):
 
             elif (self.flow["electroneutrality"] or self.flow["poisson"] or self.flow["electroneutrality full"]):
                 U0 = Function(self.Vu)
-                U0.assign(self.U_app / 2)
+                if hasattr(self, "U_app"):
+                    U0.assign(self.U_app / 2)
                 if initial_solve:
                     v0 = TestFunction(self.Vu)
                     u0 = [us[i] for i in range(self.num_mass)]
