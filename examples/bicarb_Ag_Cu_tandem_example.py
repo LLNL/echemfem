@@ -11,19 +11,19 @@ from mpi4py import MPI
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
-##Description:
-#This example case runs a tandem electrode system, with an Ag catalyst placed
-#in front of a Cu catalyst, at a Peclet number of 1E3. 
-#The advection/diffusion/migration/electroneutrality equations are solved 
-#for the bulk electrolyte, and a Tafel description is applied for the surface 
-#catalyst reactions.
-
-#Assumed products of Cu catalyst are C2H4, C2H6O, and H2.
-#Assumed products of Ag catalysis are CO and H2.
-
-##--------------------------------------------------------------------------
-#list of references
 """
+This example case runs a tandem electrode system, with an Ag catalyst placed
+in front of a Cu catalyst, at a Peclet number of 1E3. 
+The advection/diffusion/migration/electroneutrality equations are solved 
+for the bulk electrolyte, and a Tafel description is applied for the surface 
+catalyst reactions.
+
+Assumed products of Cu catalyst are C2H4, C2H6O, and H2.
+Assumed products of Ag catalysis are CO and H2.
+
+--------------------------------------------------------------------------
+list of references
+
 Bicarbonate flow reactor setup given in:
 Lin, T.Y., Baker, S.E., Duoss, E.B. and Beck, V.A., 2021. Analysis of
 the Reactive CO2 Surface Flux in Electrocatalytic Aqueous Flow
@@ -53,10 +53,9 @@ Govindarajan, N., Lin, T. Y., Roy, T., Hahn, C., & Varley, J. B., 2023. Coupling
 Microkinetics with Continuum Transport Models to Understand Electrochemical 
 CO2 Reduction in Flow Reactors. PRX Energy, 2(3), pp.033010.
 
+--------------------------------------------------------------------------
+end of list of references
 """
-##--------------------------------------------------------------------------
-#end of list of references
-
 
 
 #---------------------------------------------------------------------------

@@ -8,6 +8,24 @@ PETSc.Sys.popErrorHandler()
 
 set_log_level(DEBUG)
 
+"""
+3D Flow-plate reactor with electroneutral Nernst-Planck. Using a custom gmsh
+mesh with refinement close to the electrodes. The mesh is then extruded in the
+z-direction. Custom block preconditioners are used. The file submitter.pl can
+be adapted to launch slurm jobs using perl.
+
+Three ion case adapted from the 2D case in: 
+Bortels, L., Deconinck, J. and Van Den Bossche, B., 1996. The multi-dimensional
+upwinding method as a new simulation tool for the analysis of multi-ion
+electrolytes controlled by diffusion, convection and migration. Part 1. Steady
+state analysis of a parallel plane flow channel. Journal of Electroanalytical
+Chemistry, 404(1), pp.15-26.
+
+Nondimensionalization and preconditioning from:
+Roy, T., Andrej, J. and Beck, V.A., 2023. A scalable DG solver for the
+electroneutral Nernst-Planck equations. Journal of Computational Physics, 475,
+p.111859.
+"""
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-ref_levels', type=int, default=0)
@@ -55,6 +73,7 @@ class Q1PC(PMGPC):
 class BortelsSolver(EchemSolver):
     def __init__(self):
         # Create an initial coarse mesh
+        # Note: will need to use "gmsh -2 mesh_name.geo" command to convert to .msh format
         if args.mesh == 'structured':
             plane_mesh = Mesh('bortels_structuredquad_nondim_coarse1664.msh')
             layers = 8
@@ -196,7 +215,6 @@ class BortelsSolver(EchemSolver):
 solver = BortelsSolver()
 
 # Custom solver parameters
-
 
 class CoarsenPenaltyPMGPC(P1PC):
     def coarsen_form(self, form, replace_dict):

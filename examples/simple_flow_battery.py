@@ -1,6 +1,19 @@
 from firedrake import *
 from echemfem import EchemSolver, NavierStokesBrinkmanFlowSolver
 import argparse
+
+
+"""
+A simple Vanadium flow battery using advection-diffusion-reaction, Poisson for
+the ionic potential with a predefinied conductivity and Stokes-Brinkman for the
+flow.
+
+Model taken from
+Lin, T.Y., Baker, S.E., Duoss, E.B. and Beck, V.A., 2022. Topology optimization
+of 3D flow fields for flow batteries. Journal of The Electrochemical Society,
+169(5), p.050540.
+"""
+
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument("--family", type=str, default='CG')
 parser.add_argument("--vel_file", type=str, default=None)
@@ -17,11 +30,6 @@ electrode_length = 500e-6 # m
 mesh = RectangleMesh(50, 50, electrode_length, electrode_thickness, quadrilateral=True)
 
 class FlowBatterySolver(EchemSolver):
-    """
-    Lin, T.Y., Baker, S.E., Duoss, E.B. and Beck, V.A., 2022. Topology optimization
-    of 3D flow fields for flow batteries. Journal of The Electrochemical Society,
-    169(5), p.050540.
-    """
     def __init__(self):
         conc_params = []
 

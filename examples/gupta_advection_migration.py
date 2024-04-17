@@ -4,10 +4,9 @@ from echemfem import EchemSolver, RectangleBoundaryLayerMesh
 
 class GuptaSolver(EchemSolver):
     """
-    Flow past a flat plate electrode for CO2 reduction.
-    Using electroneutral Nernst-Planck.
-    The homogenous bulk reactions and the constant-rate charge-transfer
-    kinetics are taken from:
+    Flow past a flat plate electrode for CO2 reduction using electroneutral
+    Nernst-Planck. The homogenous bulk reactions and the constant-rate
+    charge-transfer kinetics are taken from:
 
     Gupta, N., Gattrell, M. and MacDougall, B., 2006. Calculation for the
     cathode surface concentrations in the electrochemical reduction of CO2 in

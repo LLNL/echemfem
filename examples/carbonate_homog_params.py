@@ -1,20 +1,24 @@
 from firedrake import *
 from echemfem import EchemSolver, IntervalBoundaryLayerMesh
 
+"""
+A 1D example of diffusion-reaction for CO2 electrolysis with bicarbonate bulk
+reactions. The charge-transfer reactions are implemented by hand but the bulk
+reactions are implemented using the homog_params interface.
+
+Steady-state version of example from
+Gupta, N., Gattrell, M. and MacDougall, B., 2006. Calculation for the
+cathode surface concentrations in the electrochemical reduction of CO2 in
+KHCO3 solutions. Journal of applied electrochemistry, 36(2), pp.161-172.
+
+Using the bicarbonate bulk reactions from
+Schulz, K.G., Riebesell, U., Rost, B., Thoms, S. and Zeebe, R.E., 2006.
+Determination of the rate constants for the carbon dioxide to bicarbonate
+inter-conversion in pH-buffered seawater systems. Marine chemistry,
+100(1-2), pp.53-65.
+"""
 
 class CarbonateSolver(EchemSolver):
-    """
-    Steady-state version of example from
-    Gupta, N., Gattrell, M. and MacDougall, B., 2006. Calculation for the
-    cathode surface concentrations in the electrochemical reduction of CO2 in
-    KHCO3 solutions. Journal of applied electrochemistry, 36(2), pp.161-172.
-    but using the bicarbonate bulk reactions from
-    Schulz, K.G., Riebesell, U., Rost, B., Thoms, S. and Zeebe, R.E., 2006.
-    Determination of the rate constants for the carbon dioxide to bicarbonate
-    inter-conversion in pH-buffered seawater systems. Marine chemistry,
-    100(1-2), pp.53-65.
-    """
-
     def __init__(self):
 
         delta = 0.0001
@@ -142,6 +146,9 @@ class CarbonateSolver(EchemSolver):
 solver = CarbonateSolver()
 solver.setup_solver()
 solver.solve()
+
+### Plotting
+
 C_CO2, C_OH, C_H, C_CO3, C_HCO3 = solver.u.subfunctions
 # OH boundary layer
 x = solver.mesh.coordinates

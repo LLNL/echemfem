@@ -6,7 +6,10 @@ import numpy as np
 import csv
 import pdb
 """
-Model fromn
+1D model for the CO2 electrolysis in a copper catalyst layer of a gas diffusion
+electrode (GDE). The model uses electroneutral Nernst-Planck in a porous
+medium.
+
 Corral D, Lee DU, Ehlinger VM, Nitopi S, Acosta JE, Wang L, King AJ, Feaster JT, 
 Lin YR, Weber AZ, Baker SE. Bridging knowledge gaps in liquid-and vapor-fed CO2 
 electrolysis through active electrode area. Chem Catalysis. 2022 Oct 12.
@@ -240,6 +243,9 @@ for Vs in Vlist:
     solver.U_app.assign(Vs)
     print("V = %d mV" % (Vs * 1000))
     solver.solve()
+
+    ## Plotting
+
     cCO2, cOH, cH, cCO3, cHCO3, phi2, phi1 = solver.u.subfunctions
     cK = Function(solver.V).assign(2 * cCO3 + cOH + cHCO3 - cH)
 

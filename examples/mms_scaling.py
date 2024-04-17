@@ -8,6 +8,16 @@ PETSc.Sys.popErrorHandler()
 
 set_log_level(DEBUG)
 
+"""
+A manufactured example of 3D electroneutral Nernst-Planck to evaluate the
+convergence of the DG scheme and scaling of custom block preconditioners. The
+file submitter_mms.pl can be adapted to launch slurm jobs using perl.
+
+DG scheme and preconditioning from:
+Roy, T., Andrej, J. and Beck, V.A., 2023. A scalable DG solver for the
+electroneutral Nernst-Planck equations. Journal of Computational Physics, 475,
+p.111859.
+"""
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-ref_levels', type=int, default=0)
