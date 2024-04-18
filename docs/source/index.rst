@@ -24,6 +24,7 @@ Contents
 .. toctree::
    :titlesonly:
 
+   examples
    api
 
 Copyright and License

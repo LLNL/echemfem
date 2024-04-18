@@ -5,8 +5,8 @@ import argparse
 
 """
 A simple Vanadium flow battery using advection-diffusion-reaction, Poisson for
-the ionic potential with a predefinied conductivity and Stokes-Brinkman for the
-flow.
+the ionic potential with a predefinied conductivity and Navier-Stokes-Brinkman
+for the flow.
 
 Model taken from
 Lin, T.Y., Baker, S.E., Duoss, E.B. and Beck, V.A., 2022. Topology optimization

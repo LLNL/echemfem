@@ -4,8 +4,8 @@ from echemfem import EchemSolver, IntervalBoundaryLayerMesh
 
 class GuptaSolver(EchemSolver):
     """
-    A 1D example of diffusion-reaction for CO2 electrolysis with bicarbonate bulk
-    reactions.
+    A 1D example of diffusion-reaction for CO2 electrolysis with simplified
+    bicarbonate bulk reactions.
 
     Steady-state version of example from
     Gupta, N., Gattrell, M. and MacDougall, B., 2006. Calculation for the
