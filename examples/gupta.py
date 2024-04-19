@@ -4,6 +4,9 @@ from echemfem import EchemSolver, IntervalBoundaryLayerMesh
 
 class GuptaSolver(EchemSolver):
     """
+    A 1D example of diffusion-reaction for CO2 electrolysis with simplified
+    bicarbonate bulk reactions.
+
     Steady-state version of example from
     Gupta, N., Gattrell, M. and MacDougall, B., 2006. Calculation for the
     cathode surface concentrations in the electrochemical reduction of CO2 in
@@ -94,6 +97,9 @@ class GuptaSolver(EchemSolver):
 solver = GuptaSolver()
 solver.setup_solver()
 solver.solve()
+
+## Plotting
+
 C_CO2, C_HCO3, C_CO3, C_OH = solver.u.subfunctions
 # OH boundary layer
 x = solver.mesh.coordinates
@@ -124,7 +130,7 @@ ax3.set(xlabel='distance (m)',
 plot(C_OH, axes=ax4)
 ax4.set(xlabel='distance (m)',
         ylabel='OH concentration (M)')
-plt.plot(x_bl, C_OH_bl, axes=ax5, color='k', linewidth=2)
+plt.plot(x_bl, C_OH_bl, color='k', linewidth=2)
 ax5.set(xlabel='distance (m)',
         ylabel='OH concentration (M)')
 

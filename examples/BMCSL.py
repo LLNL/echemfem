@@ -3,7 +3,12 @@ Created on Friday Jan 27 2023
 
 @author: Nitish Govindarajan
 
+Simple example for the BMCSL model for finite size ion effects
+
 Code to reproduce Figure 1 from doi:10.1016/j.jcis.2007.08.006
+Biesheuvel, P.M. and Van Soestbergen, M., 2007. Counterion volume effects in
+mixed electrical double layers. Journal of Colloid and Interface Science,
+316(2), pp.490-499.
 """
 
 # Import required libraries

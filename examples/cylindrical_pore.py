@@ -2,7 +2,9 @@ from firedrake import *
 from echemfem import EchemSolver
 import numpy as np
 """
-Model from
+A symmetric cylindrical pore model for CO2 electrolysis using electroneutral
+Nernst-Planck and simplified bicarbonate bulk reactions.
+
 Elucidating Mass Transport Regimes in Gas Diffusion Electrodes for CO2 Electroreduction
 Thomas Moore, Xiaoxing Xia, Sarah E. Baker, Eric B. Duoss, and Victor A. Beck
 ACS Energy Letters 2021 6 (10), 3600-3606
@@ -170,17 +172,17 @@ solver.setup_solver(initial_solve=False)
 solver.save_solutions = False
 solver.solve()
 
+## Plotting
+
 # getting active region
 _, Z = SpatialCoordinate(solver.mesh)
 active = conditional(le(Z, 5e-6), 1., 0.)
-
 
 def get_boundary_dofs(V, i):
     u = Function(V)
     bc = DirichletBC(V, active, i)
     bc.apply(u)
     return np.where(u.vector()[:] == 1)
-
 
 dofs = get_boundary_dofs(solver.V, 2)
 Z_cat = Function(solver.V).interpolate(Z).dat.data[dofs]

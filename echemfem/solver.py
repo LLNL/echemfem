@@ -368,7 +368,7 @@ class EchemSolver(ABC):
                 us[self.num_liquid:self.num_liquid + self.num_gas], self.pg, gas_params)
 
         # setup applied voltage
-        if self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]:
+        if physical_params.get("U_app"):
             U_app = physical_params["U_app"]
             if isinstance(U_app, (Constant, Function)):
                 self.U_app = U_app
@@ -636,7 +636,8 @@ class EchemSolver(ABC):
 
             elif (self.flow["electroneutrality"] or self.flow["poisson"] or self.flow["electroneutrality full"]):
                 U0 = Function(self.Vu)
-                U0.assign(self.U_app / 2)
+                if hasattr(self, "U_app"):
+                    U0.assign(self.U_app / 2)
                 if initial_solve:
                     v0 = TestFunction(self.Vu)
                     u0 = [us[i] for i in range(self.num_mass)]
@@ -1223,7 +1224,7 @@ class EchemSolver(ABC):
                 reaction_f[idx] = reaction["forward rate constant"]
                 if reaction.get("backward rate constant"):
                     reaction_b[idx] = reaction["backward rate constant"]
-                else:
+                elif reaction.get("equilibrium constant"):
                     reaction_b[idx] = reaction["forward rate constant"] / \
                                         reaction["equilibrium constant"]
                 if reaction.get("reference concentration"):
@@ -1232,11 +1233,15 @@ class EchemSolver(ABC):
                     c_ref = 1.0
                 for name in reaction["stoichiometry"]:
                     s = reaction["stoichiometry"][name]
+                    order = abs(s) # default
+                    if reaction.get("reaction order"):
+                        if reaction["reaction order"].get(name):
+                            order = reaction["reaction order"][name]
                     a = u[self.i_c[name]] / c_ref
                     if s < 0:
-                        reaction_f[idx] *= a ** (-s)
+                        reaction_f[idx] *= a ** order
                     if s > 0:
-                        reaction_b[idx] *= a ** s
+                        reaction_b[idx] *= a ** order
 
             for i in self.idx_c:
                 name = self.conc_params[i]["name"]

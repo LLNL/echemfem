@@ -4,7 +4,10 @@ from echemfem import EchemSolver
 from mpi4py import MPI
 from petsc4py import PETSc
 """
-Convergence tests for Roy et al, 2021
+Convergence tests for the DG scheme in
+Roy, T., Andrej, J. and Beck, V.A., 2023. A scalable DG solver for the
+electroneutral Nernst-Planck equations. Journal of Computational Physics, 475,
+p.111859.
 """
 
 PETSc.Sys.popErrorHandler()

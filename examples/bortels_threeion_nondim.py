@@ -1,6 +1,25 @@
 from firedrake import *
 from echemflow import EchemSolver
 
+"""
+2D Flow-plate reactor with electroneutral Nernst-Planck. Using a custom gmsh
+mesh with refinement close to the electrodes. GMSH is used to get the mesh file
+from the .geo file as follows:
+
+    gmsh -2 bortels_structuredquad_nondim.geo
+
+Three ion case taken from: 
+Bortels, L., Deconinck, J. and Van Den Bossche, B., 1996. The multi-dimensional
+upwinding method as a new simulation tool for the analysis of multi-ion
+electrolytes controlled by diffusion, convection and migration. Part 1. Steady
+state analysis of a parallel plane flow channel. Journal of Electroanalytical
+Chemistry, 404(1), pp.15-26.
+
+Nondimensionalization from:
+Roy, T., Andrej, J. and Beck, V.A., 2023. A scalable DG solver for the
+electroneutral Nernst-Planck equations. Journal of Computational Physics, 475,
+p.111859.
+"""
 
 class BortelsSolver(EchemSolver):
     def __init__(self):

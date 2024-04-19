@@ -1,16 +1,17 @@
 from firedrake import *
 from echemfem import EchemSolver, RectangleBoundaryLayerMesh
 
+"""
+A 2D flow past the electrode toy model with two species and
+advection-diffusion. Taken from
+Lin, T.Y., Baker, S.E., Duoss, E.B. and Beck, V.A., 2021. Analysis of
+the Reactive CO2 Surface Flux in Electrocatalytic Aqueous Flow
+Reactors. Industrial & Engineering Chemistry Research, 60(31),
+pp.11824-11833.
+"""
 
 class CarbonateSolver(EchemSolver):
     def __init__(self):
-        """
-        Two reactions example reproduced from:
-        Lin, T.Y., Baker, S.E., Duoss, E.B. and Beck, V.A., 2021. Analysis of
-        the Reactive CO2 Surface Flux in Electrocatalytic Aqueous Flow
-        Reactors. Industrial & Engineering Chemistry Research, 60(31),
-        pp.11824-11833.
-        """
 
         Ly = 0.1
         Lx = 1.

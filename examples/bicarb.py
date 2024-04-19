@@ -5,7 +5,8 @@ from echemfem import EchemSolver
 class CarbonateSolver(EchemSolver):
     def __init__(self):
         """
-        Bicarbonate example reproduced from:
+        Flow past an electrode with bicarbonate bulk reactions and linear CO2 electrolysis
+        Example reproduced from:
         Lin, T.Y., Baker, S.E., Duoss, E.B. and Beck, V.A., 2021. Analysis of
         the Reactive CO2 Surface Flux in Electrocatalytic Aqueous Flow
         Reactors. Industrial & Engineering Chemistry Research, 60(31),

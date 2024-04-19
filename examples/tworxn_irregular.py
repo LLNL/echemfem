@@ -1,6 +1,21 @@
 from firedrake import *
 from echemfem import EchemSolver, NavierStokesFlowSolver
 
+"""
+A 2D flow past an irregular electrode toy model with two species and
+advection-diffusion, and Navier-Stokes for the flow. The electrode surface
+consists of square blocks. The mesh can be create in GMSH using the following
+command:
+
+    gmsh -2 squares_small.geo
+
+The model is adapated from
+Lin, T.Y., Baker, S.E., Duoss, E.B. and Beck, V.A., 2021. Analysis of
+the Reactive CO2 Surface Flux in Electrocatalytic Aqueous Flow
+Reactors. Industrial & Engineering Chemistry Research, 60(31),
+pp.11824-11833.
+"""
+
 peclet=10
 damkohler=10
 Ly = 0.1
@@ -11,13 +26,6 @@ mesh=Mesh('squares_small.msh')
 
 class CarbonateSolver(EchemSolver):
     def __init__(self):
-        """
-        Two reactions example reproduced from:
-        Lin, T.Y., Baker, S.E., Duoss, E.B. and Beck, V.A., 2021. Analysis of
-        the Reactive CO2 Surface Flux in Electrocatalytic Aqueous Flow
-        Reactors. Industrial & Engineering Chemistry Research, 60(31),
-        pp.11824-11833.
-        """
         
         C_1_inf = 1.
         C_2_inf = Constant(0)

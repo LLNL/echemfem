@@ -3,7 +3,7 @@
 # -- Project information
 
 project = 'EchemFEM'
-copyright = u'2022-2023, Lawrence Livermore National Laboratory'
+copyright = u'2022-2024, Lawrence Livermore National Laboratory'
 author = 'Thomas Roy'
 
 release = '0.1'
@@ -20,6 +20,11 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.mathjax',
 ]
+
+mathjax3_config = {
+  'loader': {'load': ['[tex]/mhchem']},
+  'tex': {'packages': {'[+]': ['mhchem']}},
+}
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
