@@ -83,12 +83,13 @@ Additionally, finite size effects are available, which includes models such as G
 Lastly, a fluid flow solver for the incompressible Navier-Stokes and Navier-Stokes-Brinkman equations is provided.
 
 <!--- Firedrake --->
-EchemFEM is based on Firedrake [@FiredrakeUserManual], an open-source finite element package,
-enabling straightforward implementation of the governing equations in Python.
+EchemFEM is based on Firedrake [@FiredrakeUserManual], an open-source finite element package similar to FEniCS [@logg2012automated] and FEniCSx [@barrata2023dolfinx],
+enabling straightforward implementation of the governing equations in Python through the Unified Form Language (UFL) [@alnaes2014unified].
 Firedake has access to scalable, customizable, solvers through its interface with PETSc [@petsc-user-ref; @petsc-web-page], allowing for parallelization and scalability on computing clusters.
 This balance between usability and scalability permits a seamless transition from prototyping to large-scale simulation.
 EchemFEM leverages Firedrake's capabilities while further increasing the ease-of-use.
 Indeed, since the governing equations are already implemented, little to no knowledge of Firedrake and the finite element method is required to use EchemFEM.
+Firedrake is preferred over FEniCS and FEniCSx for several reasons: it offers a custom preconditioning interface [@Mitusch2019], Firedrake continues to be actively developed unlike FEniCS, and unlike FEniCSx, it already includes automatic adjoint capabilities.
 
 The repository includes several examples of electrochemical devices such as flow reactors, flow batteries, and CO2 electrolyzers.
 
@@ -137,7 +138,7 @@ Combining EchemFEM with other Python packages is rather simple.
 In @govindarajan2023coupling, multi-scale simulations for CO2 reduction in flow reactors are performed by coupling a microkinetics model from CatMAP [@catmap] with the GMPNP transport model from EchemFEM.
 The simulations are two orders of magnitude faster than a previous implementation where the transport is done in COMSOL Multiphysics<sup>&reg;</sup>, due to the tedious interface between the commercial software and CatMAP.
 
-Firedrake's automatic adjoint capabilities facilitate the straightforward solution of PDE-constrained optimization problems [@Mitusch2019], already employed in electrochemical applications [@roy2022topology; @batista2023design].
+Firedrake's automatic adjoint capabilities facilitate the straightforward solution of PDE-constrained optimization problems [@Mitusch2019], already employed in electrochemical applications [@roy2022topology; @batista2023design; @li2024topology].
 We are currently investigating optimization problems using EchemFEM.
 
 # Acknowledgements
