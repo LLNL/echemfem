@@ -20,7 +20,7 @@ source/demos: copy_demos
 
 copy_demos:
 	install -d source/demos
-	cp ../demos/*/*.rst ../demos/*/*.png ../demos/*/*.pdf ../demos/demo_references.bib source/demos
+	cp ../demos/*/*.rst ../demos/*/*.png ../demos/demo_references.bib source/demos
 	for file in source/demos/*.py.rst; do pylit $$file; done
 
 html: Makefile copy_demos

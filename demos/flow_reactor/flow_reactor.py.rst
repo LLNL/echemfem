@@ -4,7 +4,7 @@ Flow reactor for CO2 electrolysis
 We consider a flowing bicarbonate elecrolyte with CO2 reduction on a flat plate
 electrode.
 
-.. image:: flow_reactor.pdf
+.. image:: flow_reactor.png
    :width: 400px
    :align: center
 
