@@ -14,6 +14,17 @@ help:
 
 .PHONY: help Makefile
 
+.PHONY: copy_demos
+
+source/demos: copy_demos
+
+copy_demos:
+	install -d source/demos
+	cp ../demos/*/*.rst ../demos/*/*.png ../demos/*/*.pdf ../demos/demo_references.bib source/demos
+	for file in source/demos/*.py.rst; do pylit $$file; done
+
+html: Makefile copy_demos
+	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile

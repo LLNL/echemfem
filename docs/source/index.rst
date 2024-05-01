@@ -24,6 +24,7 @@ Contents
 .. toctree::
    :titlesonly:
 
+   demos/index
    examples
    api
 
