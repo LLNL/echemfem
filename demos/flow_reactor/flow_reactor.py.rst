@@ -17,6 +17,7 @@ We consider simplified CO2 - KHCO3 homogeneous reactions:
 
    \ce{HCO3-} + \ce{OH-} \xrightleftharpoons[k_2^b]{k_2^f} \ce{CO3^2+} + \ce{H2O}
 
+where :math:`k_i^f` and :math:`k_i^b` are the forward and backward rate constants, respectively.
 Here, we assume the dilute solution case where :math:`\ce{H2O}`
 concentration is not tracked. 
 
@@ -268,7 +269,7 @@ physical constants described above::
 The parameters and the mesh are passed to the initiator of parent class
 :py:class:`EchemSolver <echemfem.EchemSolver>`. The optional argument ``family``
 sets the finite element space; here, ``"CG"`` stands for continuous Galerkin,
-which is usually the fastest option::
+which is usually the fastest option, whereas ``"DG"`` stands for discontinuous Galerkin, which can provide more stability for advection-dominated cases::
 
             super().__init__(conc_params, physical_params, mesh, family="CG",
                              echem_params=echem_params,

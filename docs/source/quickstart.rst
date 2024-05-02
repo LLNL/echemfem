@@ -6,8 +6,8 @@ Quickstart Guide
 Installation
 ------------
 
-First, please install the open-source finite element library `Firedrake <https://www.firedrakeproject.org/download.html>`_.
-On a Mac with Homebrew installed or on an Ubuntu workstation with sudo access, it can be installed using the default configuration.
+First, please install the open-source finite element library `Firedrake <https://www.firedrakeproject.org>`_.
+On a Mac with Homebrew installed or on an Ubuntu workstation with sudo access, it can be installed using the default configuration as detailed `here <https://www.firedrakeproject.org/download.html>`_.
 To get started quickly, a `Docker image <https://hub.docker.com/r/firedrakeproject/firedrake>`_ is also available.
 Note that you may need to increase the default memory allocation for Docker in order to run some of the EchemFEM examples.
 
@@ -34,6 +34,18 @@ Running Examples
 To get started, a demo for a flow reactor is available :doc:`here <demos/index>`.
 Several examples can be found in `echemfem/examples <https://github.com/LLNL/echemfem/tree/main/examples>`_.
 Examples using the generalized modified Poisson-Nernst-Planck model (GMPNP) can be found in `FireCat <https://github.com/LLNL/firecat>`_, where it is coupled with a microkinetics model.
+
+To run an example:
+
+.. code-block:: console
+
+   (firedrake) $ python example_name.py
+
+And to run it in parallel with ``n_proc`` processors:
+
+.. code-block:: console
+
+   (firedrake) $ mpiexec -n n_proc python example_name.py
 
 Visualization
 -------------
