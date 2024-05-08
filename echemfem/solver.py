@@ -368,7 +368,7 @@ class EchemSolver(ABC):
                 us[self.num_liquid:self.num_liquid + self.num_gas], self.pg, gas_params)
 
         # setup applied voltage
-        if physical_params.get("U_app"):
+        if physical_params.get("U_app") is not None:
             U_app = physical_params["U_app"]
             if isinstance(U_app, (Constant, Function)):
                 self.U_app = U_app
