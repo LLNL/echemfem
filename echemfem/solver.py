@@ -448,11 +448,13 @@ class EchemSolver(ABC):
                                                 v[self.num_mass],
                                                 conc_params,
                                                 solid=False)
-            Form += a
             bcs += bc
         elif self.flow["electroneutrality full"]:
             a, bc = self.electroneutrality_form(us, v[self.num_liquid - 1], conc_params)
-            Form += a
+            weight = self.physical_params.get("electroneutrality residual weight")
+            if weight is None:
+                weight = 1.0
+            Form += weight * a
             bcs += bc
         # Poisson equation for the solid potential
         if self.flow["porous"] and (
@@ -461,7 +463,10 @@ class EchemSolver(ABC):
                                                 v[self.num_mass + 1],
                                                 conc_params,
                                                 solid=True)
-            Form += a
+            weight = self.physical_params.get("solid potential residual weight")
+            if weight is None:
+                weight = 1.0
+            Form += weight * a
             bcs += bc
         # Single phase Darcy
         if self.flow["darcy"] and self.flow["advection"]:
@@ -944,7 +949,7 @@ class EchemSolver(ABC):
                          "snes_converged_reason": None,
                          "snes_rtol": 1e-16,
                          "snes_atol": 1e-16,
-                         # "snes_divergence_tolerance": -1,
+                         "snes_divergence_tolerance": 1e6,
                          "snes_max_it": 50,
                          }
 
