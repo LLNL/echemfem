@@ -58,7 +58,7 @@ The dimensional version of the momentum equation is
 
 .. math::
 
-   -\nabla\left(\nu_\mathrm{eff} \mathbf u \right)+ \mathbf u \cdot \nabla \mathbf u + \frac{1}{\rho} \nabla p + \nu K^{-1} \mathbf u = 0,
+   -\nabla\cdot\left(\nu_\mathrm{eff} \nabla\mathbf u \right)+ \mathbf u \cdot \nabla \mathbf u + \frac{1}{\rho} \nabla p + \nu K^{-1} \mathbf u = 0,
 
 where :math:`\nu_\mathrm{eff}` is the effective viscosity in the porous medium,
 and :math:`K`, its permeability. The inverse permeability can be provided
