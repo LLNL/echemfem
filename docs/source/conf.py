@@ -38,7 +38,7 @@ intersphinx_disabled_domains = ['std']
 templates_path = ['_templates']
 
 #  -- Options for sphinxcontrib.bibtex ------------------------------------
-bibtex_bibfiles = ['demos/demo_references.bib']
+bibtex_bibfiles = ['demos/demo_references.bib', '_static/references.bib']
 
 # -- Options for HTML output
 

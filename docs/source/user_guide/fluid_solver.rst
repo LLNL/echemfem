@@ -66,13 +66,13 @@ The dimensional version of the momentum equation is
 
 where :math:`\nu_\mathrm{eff}` is the effective viscosity in the porous medium,
 and :math:`K`, its permeability. It is also common to use the effective dynamic
-viscosity :math:`\mu_\mathrm{eff} = \nu_\mathrm{eff} \rho`
+viscosity :math:`\mu_\mathrm{eff} = \nu_\mathrm{eff} \rho`.
 
 The inverse permeability :math:`K^{-1}` can be provided directly in cases where
 it is zero in some regions, i.e. liquid-only regions. It is common to take
 :math:`\nu_\mathrm{eff}=\nu` for simplicity (the default here).
 
-The nondimensional implementation currently assume :math:`\nu_\mathrm{eff}=\nu`
+The nondimensional implementation currently assumes :math:`\nu_\mathrm{eff}=\nu`
 and :math:`K^{-1}>0`, such that
 
 
@@ -91,7 +91,7 @@ For the dimensional version, the user must also pass the following keys:
 
 * Optional: ``"effective kinematic viscosity"`` or ``"effective dynamic viscosity"``: :math:`\nu_\mathrm{eff}` and :math:`\mu_\mathrm{eff}`, respectively
 
-To use the nondimensional version, the user must also pass the following key:
+To use the nondimensional version, the user must pass the following key:
 
 * ``"Darcy number"``: :math:`\mathrm{Da}`
 
@@ -120,10 +120,11 @@ keys.
 Numerical considerations
 ------------------------
 
-The discretization is done using Taylor-Hood elements (piecewise linear
-pressure, piecewise quadratic velocity), which satisfy the inf-sup condition.
+The discretization is done using Taylor-Hood elements :cite:`Taylor1973`
+(piecewise linear pressure, piecewise quadratic velocity), which satisfy the
+inf-sup condition :cite:`Ladyzhenskaya1963,Brezzi1974,Babuvska1971`.
 
-To achieve convergence other than at low a Reynolds number, it may be required
+To achieve convergence other than at a low Reynolds number, it may be required
 to do continuation on the parameter so that Newton's method has better initial
 guesses. This can be done for example, by passing the Reynolds number as a
 :class:`firedrake.constant.Constant`, and assigning a larger value after each
@@ -140,3 +141,8 @@ For the Darcy number, using a very small value (:math:`\mathrm{Da}\sim
 done in topology optimization. For smaller values, convergence issues can
 arise. Reversly, as :math:`\mathrm{Da}\to\infty`, we simply recover
 Navier-Stokes.
+
+.. rubric:: References
+
+.. bibliography:: ../_static/references.bib
+   :filter: docname in docnames
