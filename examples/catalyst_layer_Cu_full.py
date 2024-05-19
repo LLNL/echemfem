@@ -4,6 +4,7 @@ from firedrake import *
 from echemfem import EchemSolver
 import numpy as np
 import csv
+from scipy.optimize import fsolve
 """
 1D model for the CO2 electrolysis in a copper catalyst layer of a gas diffusion
 electrode (GDE). The model uses electroneutral Nernst-Planck in a porous
@@ -87,6 +88,7 @@ k4b = k4f/K4
 kwb = kwf/Kw
 
 # Bulk Electrolyte concentrations
+# These are the values from Corral et al.
 pH0 = 7.9
 cKb = 1000                # mol/m3
 c0Hb = pow(10, -pH0+3)     # mol/m3
@@ -95,6 +97,34 @@ c0CO3b = cKb/(1+c0Hb/K2+c0Hb**2/(K1*K2))
 c0HCO3b = c0Hb*c0CO3b/K2
 c0CO2b = H_CO2
 cb = np.array([c0CO2b, c0OHb, c0Hb, c0CO3b, c0HCO3b, cKb])
+
+## Solving the bicarbonate bulk reaction system + electroneutrality
+# The above values don't solve this system with very high accuracy, which is
+# problematic since this causes a discontinuity at the boundary condition.
+# Instead, we fix CO2 and K+ concentrations and solve for the others using law
+# of mass action and electroneutrality. Note that two of the reactions are
+# linearly dependent on the others (see above how K3 and K4 are obtained from
+# the others.
+def reaction_system(u):
+    C_CO2 = H_CO2
+    C_K = cKb
+    C_OH = u[0]
+    C_HCO3 = u[1]
+    C_CO3 = u[2]
+    C_H = u[3]
+    r3 = 1. - C_HCO3 / (K3 * C_OH * C_CO2)
+    r4 = 1. - C_CO3 / (K4 * C_HCO3 * C_OH)
+    rw = 1. - (C_OH * C_H)/Kw
+    electro = C_K + C_H - C_OH - C_HCO3 - 2 * C_CO3
+    return [r3, r4, rw, electro]
+
+Ci = [c0OHb, c0HCO3b, c0CO3b, c0Hb]
+Copt = fsolve(reaction_system, Ci, xtol=1e-16, maxfev=1000, diag=None)
+C_OH_bulk = Copt[0]
+C_HCO3_bulk = Copt[1]
+C_CO32_bulk = Copt[2]
+C_H_bulk = Copt[3]
+cb = np.array([c0CO2b, C_OH_bulk, C_H_bulk, C_CO32_bulk, C_HCO3_bulk, cKb])
 
 
 class PorousSolver(EchemSolver):

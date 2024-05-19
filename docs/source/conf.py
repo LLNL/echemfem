@@ -19,6 +19,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
     'sphinx.ext.mathjax',
+    'sphinxcontrib.bibtex',
 ]
 
 mathjax3_config = {
@@ -35,6 +36,9 @@ intersphinx_mapping = {
 intersphinx_disabled_domains = ['std']
 
 templates_path = ['_templates']
+
+#  -- Options for sphinxcontrib.bibtex ------------------------------------
+bibtex_bibfiles = ['demos/demo_references.bib', '_static/references.bib']
 
 # -- Options for HTML output
 

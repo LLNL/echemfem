@@ -21,7 +21,7 @@ appear in each dictionary
   :Description: the number of electrons :math:`n_k` being transferred in the reaction.
 * :Key: ``"stoichiometry"``
   :Type: :py:class:`dict`
-  :Description: This entry defines the stoichiometry of the reaction. Each key in this dictionary should be the name of a species (as defined in the ``"name"`` key values of ``conc_params``). The corresponding value is the stoichemetry coefficient :math:`s_{j,k}` for the species in this reaction. It should be an integer: negative for a reactant, positive for a product.
+  :Description: This entry defines the stoichiometry of the reaction. Each key in this dictionary should be the name of a species (as defined in the ``"name"`` key values of ``conc_params``). The corresponding value is the stoichiometry coefficient :math:`s_{j,k}` for the species in this reaction. It should be an integer: negative for a reactant, positive for a product.
 * :Key: ``"boundary"``
   :Type: :py:class:`str`
   :Description: In the non-porous case, this entry provides the name of the boundary where the charge-transfer reaction happens. This should correspond to a key in the dictionary ``self.boundary_markers`` containing the :doc:`boundary_conditions`.

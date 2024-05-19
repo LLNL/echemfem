@@ -271,6 +271,8 @@ class NavierStokesBrinkmanFlowSolver(FlowSolver):
                 inv_K = params["inverse permeability"]
             if params.get("effective kinematic viscosity"):
                 nu_eff = params.get("effective kinematic viscosity")
+            elif params.get("effective dynamic viscosity"):
+                nu_eff = params.get("effective dynamic viscosity") / rho
             else:
                 nu_eff = nu
             F = nu_eff * inner(grad(u), grad(v)) * dx \
