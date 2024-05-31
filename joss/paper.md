@@ -117,6 +117,7 @@ Finally, since everything needs to be set up through the GUI, scripting and coup
 
 There is a growing number of open-source software for electrochemistry, especially Python-based packages [@zheng2023python], many of which are specialized for specific applications, notably batteries.
 One such package, PyBaMM [@sulzer2021python], is a battery modelling code with a flexible implementation, allowing for new models and numerical methods to be tested.
+Similarly, cideMOD [@aylagas2022cidemod] leverages FEniCSx in a manner analogous to how EchemFEM employs Firedrake, thus enabling the simulation of 2D and 3D battery cell geometries.
 OpenFOAM [@openfoamwebsite] is a popular tool that is mainly used for computational fluid dynamics, but implementation of custom transport mechanisms, such as those from electrochemistry, can have a steep learning curve.
 
 <!--- Why echemfem --->
