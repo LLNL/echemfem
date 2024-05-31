@@ -36,7 +36,7 @@ authors:
     orcid: 0000-0003-0802-5547
     affiliation: 3
 affiliations:
- - name: Lawrence Livermore National Laboratory, CA, USA
+ - name: Lawrence Livermore National Laboratory, CA, United States of America
    index: 1
  - name: TotalEnergies OneTech, France
    index: 2
