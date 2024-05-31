@@ -145,6 +145,6 @@ We are currently investigating optimization problems using EchemFEM.
 # Acknowledgements
 
 This work was performed under the auspices of the U.S. Department of Energy by Lawrence Livermore National Laboratory (LLNL) under Contract DE-AC52-07NA27344, and was partially supported by a Cooperative Research and Development Agreement (CRADA) between LLNL and TotalEnergies American Services, Inc. (affiliate of TotalEnergies SE) under agreement number TC02307 and Laboratory Directed Research and Development (LDRD) funding under projects 19-ERD-035 and 22-SI-006.
-LLNL Release Number LLNL-JRNL-860653-DRAFT.
+LLNL Release Number LLNL-JRNL-860653.
 
 # References
