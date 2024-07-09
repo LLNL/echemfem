@@ -89,7 +89,7 @@ Firedake has access to scalable, customizable, solvers through its interface wit
 This balance between usability and scalability permits a seamless transition from prototyping to large-scale simulation.
 EchemFEM leverages Firedrake's capabilities while further increasing the ease-of-use.
 Indeed, since the governing equations are already implemented, little to no knowledge of Firedrake and the finite element method is required to use EchemFEM.
-Firedrake is preferred over FEniCS and FEniCSx for several reasons: it offers a custom preconditioning interface [@Mitusch2019], Firedrake continues to be actively developed unlike FEniCS, and unlike FEniCSx, it already includes automatic adjoint capabilities.
+Firedrake is preferred over FEniCS and FEniCSx for several reasons: it offers a custom preconditioning interface [@kirby2018efficient], Firedrake continues to be actively developed unlike FEniCS, and unlike FEniCSx, it already includes automatic adjoint capabilities.
 
 The repository includes several examples of electrochemical devices such as flow reactors, flow batteries, and CO2 electrolyzers.
 
@@ -132,7 +132,7 @@ For discontinuous Galerkin (DG), a custom upwind scheme for the Nernst-Planck eq
 In both cases, the upwinding considers the combined advection-migration ``velocity''.
 
 As opposed to commercial software, custom scalable solvers are available in Firedrake.
-A plethora of solver options are available through simple PETSc keywords and custom operators for preconditioning can be defined using Firedrake [@Mitusch2019].
+A plethora of solver options are available through simple PETSc keywords and custom operators for preconditioning can be defined using Firedrake [@kirby2018efficient].
 In @roy2023scalable, scalable block preconditioners were developed for the electroneutral Nernst-Planck equations with DG and implemented in EchemFEM.
 
 Combining EchemFEM with other Python packages is rather simple.
