@@ -448,6 +448,7 @@ class EchemSolver(ABC):
                                                 v[self.num_mass],
                                                 conc_params,
                                                 solid=False)
+            Form += a
             bcs += bc
         elif self.flow["electroneutrality full"]:
             a, bc = self.electroneutrality_form(us, v[self.num_liquid - 1], conc_params)
