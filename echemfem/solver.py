@@ -184,7 +184,9 @@ class EchemSolver(ABC):
         self.poly_degreeU = self.poly_degree
         self.poly_degreep = self.poly_degree
         self.family = family
-        # DG penalization parameter. defined here for PMG
+        # DG penalization parameter
+        self.C_IP = Constant(10.)
+        # These DG parameters are defined here for PMG
         if p_penalty is None:
             p_penalty = Constant(p)
         self.penalty_degree = p_penalty  # Constant(self.poly_degree)
@@ -1487,8 +1489,7 @@ class EchemSolver(ABC):
         n = FacetNormal(mesh)
         if family == "DG":
             he = CellVolume(mesh) / FacetArea(mesh)
-            C_IP = 10.0
-            D_IP = C_IP * max_value(self.penalty_degree**2, 1) / he
+            D_IP = self.C_IP * max_value(self.penalty_degree**2, 1) / he
             K_IP = -1  # SIP
 
         a = 0.0
@@ -1762,8 +1763,7 @@ class EchemSolver(ABC):
         n = FacetNormal(mesh)
         if family == "DG":
             he = CellVolume(mesh) / FacetArea(mesh)
-            C_IP = 10.0
-            D_IP = C_IP * max_value(self.penalty_degree**2, 1) / he
+            D_IP = self.C_IP * max_value(self.penalty_degree**2, 1) / he
             K_IP = -1  # SIP
 
         a = 0.0
@@ -1884,9 +1884,8 @@ class EchemSolver(ABC):
         n = FacetNormal(mesh)
         if family == "DG":
             he = CellVolume(mesh) / FacetArea(mesh)
-            C_IP = Constant(10.0)
-            D_IP = C_IP * max_value(self.penalty_degree**2, 1) / he
-            D_IP2 = C_IP * max_value(self.penalty_degreeU**2, 1) / he
+            D_IP = self.C_IP * max_value(self.penalty_degree**2, 1) / he
+            D_IP2 = self.C_IP * max_value(self.penalty_degreeU**2, 1) / he
             K_IP = -1  # SIP
 
         a = 0.0
@@ -2067,9 +2066,8 @@ class EchemSolver(ABC):
         n = FacetNormal(mesh)
         if family == "DG":
             he = CellVolume(mesh) / FacetArea(mesh)
-            C_IP = 10.0
-            D_IP = C_IP * max_value(self.penalty_degree**2, 1) / he
-            D_IP2 = C_IP * max_value((self.penalty_degreeU)**2, 1) / he
+            D_IP = self.C_IP * max_value(self.penalty_degree**2, 1) / he
+            D_IP2 = self.C_IP * max_value((self.penalty_degreeU)**2, 1) / he
             K_IP = -1  # SIP
 
         if self.flow["porous"] and solid:
@@ -2255,10 +2253,9 @@ class EchemSolver(ABC):
         n = FacetNormal(mesh)
         if family == "DG":
             he = CellVolume(mesh) / FacetArea(mesh)
-            C_IP = 10.0
-            D_IP = C_IP * max_value(self.penalty_degree**2, 1) / he
-            D_IP2 = C_IP * max_value((self.penalty_degreep)**2, 1) / he
-            D_IP3 = C_IP * max_value((self.penalty_degreeU)**2, 1) / he
+            D_IP = self.C_IP * max_value(self.penalty_degree**2, 1) / he
+            D_IP2 = self.C_IP * max_value((self.penalty_degreep)**2, 1) / he
+            D_IP3 = self.C_IP * max_value((self.penalty_degreeU)**2, 1) / he
             K_IP = -1  # SIP
 
         a = 0.0
@@ -2405,8 +2402,7 @@ class EchemSolver(ABC):
         n = FacetNormal(mesh)
         if family == "DG":
             he = CellVolume(mesh) / FacetArea(mesh)
-            C_IP = 10.0
-            D_IP2 = C_IP * max_value(self.penalty_degreep**2, 1) / he
+            D_IP2 = self.C_IP * max_value(self.penalty_degreep**2, 1) / he
             K_IP = -1  # SIP
 
         a = 0.0
@@ -2522,9 +2518,8 @@ class EchemSolver(ABC):
         n = FacetNormal(mesh)
         if family == "degree":
             he = CellVolume(mesh) / FacetArea(mesh)
-            C_IP = 10.0
-            D_IP = C_IP * max_value(self.penalty_degree**2, 1) / he
-            D_IP2 = C_IP * max_value((self.penalty_degreep)**2, 1) / he
+            D_IP = self.C_IP * max_value(self.penalty_degree**2, 1) / he
+            D_IP2 = self.C_IP * max_value((self.penalty_degreep)**2, 1) / he
             K_IP = -1  # SIP
 
         n_g = self.num_g
