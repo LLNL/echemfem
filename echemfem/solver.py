@@ -1260,6 +1260,11 @@ class EchemSolver(ABC):
                             c_ref = 1.0
                         reactions[i] += s * c_ref * (reaction_f[idx] - reaction_b[idx])
 
+            if self.flow["porous"]:
+                porosity = self.physical_params["porosity"]
+                eps_l = porosity * self.Sw # liquid void fraction
+                reactions = [eps_l * r for r in reactions]
+
             return reactions
         if self.physical_params.get("bulk reaction"):
             print = PETSc.Sys.Print
