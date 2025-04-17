@@ -26,3 +26,7 @@ To install EchemFEM, simply run the following in the parent echemfem folder:
 pip install -e .
 ```
 The documentation has more details about installation and running the code.
+
+## Citing
+
+To cite EchemFEM, please cite the [JOSS paper](https://doi.org/10.21105/joss.06531). For the DG discretization, please cite the [JCP paper](https://doi.org/10.1016/j.jcp.2022.111859).
