@@ -635,9 +635,9 @@ class EchemSolver(ABC):
                         solver_parameters=self.potential_solver_parameters,
                         options_prefix="echem_potential_initial_guess_")
                     Ul, Us = U0.subfunctions
-                    File("results/liquid_potential0.pvd").write(Function(self.Vu,
+                    VTKFile("results/liquid_potential0.pvd").write(Function(self.Vu,
                                                                          name="Liquid Potential").assign(Ul))
-                    File("results/solid_potential0.pvd").write(Function(self.Vu,
+                    VTKFile("results/solid_potential0.pvd").write(Function(self.Vu,
                                                                         name="Solid Potential").assign(Us))
                     u.sub(i_Ul).assign(U0.sub(0))
                     u.sub(i_Us).assign(U0.sub(1))
@@ -698,9 +698,9 @@ class EchemSolver(ABC):
                         bcs=bcs,
                         solver_parameters=pressure_solver_parameters)
                     pl, pg = p0.subfunctions
-                    File("results/liquid_pressure0.pvd").write(Function(self.Vp,
+                    VTKFile("results/liquid_pressure0.pvd").write(Function(self.Vp,
                                                                         name="Liquid Pressure").assign(pl))
-                    File("results/gas_pressure0.pvd").write(Function(self.Vp,
+                    VTKFile("results/gas_pressure0.pvd").write(Function(self.Vp,
                                                                      name="Gas Pressure").assign(pg))
                 u.sub(i_pl).assign(p0.sub(0))
                 u.sub(i_pg).assign(p0.sub(1))
@@ -799,7 +799,7 @@ class EchemSolver(ABC):
                     be same FunctionSpace as self.u
                 prefix (str): Path to results directory
                 initiate (bool): if True, create the output file
-                **kwargs: Arbitrary keyword arguments passed to File.write
+                **kwargs: Arbitrary keyword arguments passed to VTKFile.write
 
         """
         PETSc.Sys.Print("Writing solutions. This may take a while...")
@@ -815,7 +815,7 @@ class EchemSolver(ABC):
             uviz = u.subfunctions
 
         if initiate:
-            self.output_file = File(prefix + "collection.pvd")
+            self.output_file = VTKFile(prefix + "collection.pvd")
         r = self.output_file
         collection = []
 
@@ -875,10 +875,10 @@ class EchemSolver(ABC):
         vel_vizfs = VectorFunctionSpace(self.mesh, family, 1)
         projected_velocity = project(self.vel, vel_vizfs)
         projected_velocity.rename("velocity")
-        File("results/" + "velocity" + ".pvd").write(projected_velocity)
+        VTKFile("results/" + "velocity" + ".pvd").write(projected_velocity)
 
         for i in range(self.num_liquid):
-            File(
+            VTKFile(
                 "results/"
                 + self.conc_params[i]["name"]
                 + ".pvd").write(
@@ -889,7 +889,7 @@ class EchemSolver(ABC):
         X_el = 1.0
         for i in range(self.num_gas):
             j = i + self.num_liquid
-            File(
+            VTKFile(
                 "results/"
                 + self.gas_params[i]["name"]
                 + ".pvd").write(
@@ -899,29 +899,29 @@ class EchemSolver(ABC):
                     uviz[j]))
             X_el -= uviz[j]
         if self.gas_params:
-            File("results/" + self.gas_params[self.num_gas]["name"] + ".pvd").write(
+            VTKFile("results/" + self.gas_params[self.num_gas]["name"] + ".pvd").write(
                 Function(self.V, name=self.gas_params[self.num_gas]["name"]).assign(X_el))
-            File("results/saturation.pvd").write(
+            VTKFile("results/saturation.pvd").write(
                 Function(self.V, name="Saturation").interpolate(self.Sw))
         if self.flow["poisson"] or self.flow["electroneutrality"] or self.flow["electroneutrality full"]:
-            File("results/liquid_potential.pvd").write(Function(self.Vu,
+            VTKFile("results/liquid_potential.pvd").write(Function(self.Vu,
                                                                 name="Liquid Potential").assign(uviz[self.num_mass]))
             if self.flow["porous"]:
-                File("results/solid_potential.pvd").write(Function(self.Vu,
+                VTKFile("results/solid_potential.pvd").write(Function(self.Vu,
                                                                    name="Solid Potential").assign(uviz[self.num_mass + 1]))
         if self.flow["electroneutrality"]:
             C_el = 0.0
             for i in range(self.num_liquid):
                 C_el += self.conc_params[i]["z"] * uviz[i]
             C_el = -C_el / self.conc_params[self.num_liquid]["z"]
-            File("results/" + self.conc_params[self.num_liquid]["name"] + ".pvd").write(
+            VTKFile("results/" + self.conc_params[self.num_liquid]["name"] + ".pvd").write(
                 Function(self.V, name=self.conc_params[self.num_liquid]["name"]).assign(C_el))
         if self.flow["darcy"]:
             if self.flow["advection"]:
-                File("results/" + "liquid_pressure.pvd").write(Function(self.Vp,
+                VTKFile("results/" + "liquid_pressure.pvd").write(Function(self.Vp,
                                                                         name="liquid pressure").assign(uviz[self.i_pl]))
             if self.gas_params:
-                File("results/" + "gas_pressure.pvd").write(Function(self.Vp,
+                VTKFile("results/" + "gas_pressure.pvd").write(Function(self.Vp,
                                                                      name="gas pressure").assign(uviz[self.i_pg]))
 
     def init_solver_parameters(

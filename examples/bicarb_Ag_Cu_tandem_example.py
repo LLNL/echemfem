@@ -506,7 +506,7 @@ solver.setup_solver()
 #solver.setup_solver(initial_solve=False)
 n = FacetNormal(solver.mesh)
 solver.solve()
-cCO2, cOH, cHCO3, cCO3, cH, cH2, cCO, cC2H4, cC2H6O, phi2 = solver.u.split()
+cCO2, cOH, cHCO3, cCO3, cH, cH2, cCO, cC2H4, cC2H6O, phi2 = solver.u.subfunctions
 
 
 Vlist = np.linspace(-0.5,-1.3,num=17)

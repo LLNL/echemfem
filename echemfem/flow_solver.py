@@ -103,7 +103,7 @@ class FlowSolver(ABC):
         u.rename("Velocity")
         p.rename("Pressure")
         if True:
-            file = File("results/flow.pvd")
+            file = VTKFile("results/flow.pvd")
             file.write(u, p)
 
         with CheckpointFile('Velocity_field'+'.h5', 'w') as afile:

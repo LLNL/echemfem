@@ -94,7 +94,7 @@ solver.setup_solver()
 solver.solve()
 
 n = FacetNormal(solver.mesh)
-cC1, _, = solver.u.split()
+cC1, _, = solver.u.subfunctions
 flux = assemble(dot(grad(cC1), n) * ds(11))
 flux1 = assemble(dot(grad(cC1), n)/dot(grad(cC1), n)*ds(11))
 
@@ -105,4 +105,4 @@ fichier=open('results_square.dat','a')
 fichier.write(str(peclet)+' '+str(damkohler)+' '+str(flux)+' '+str(flux1)+' \n')
 fichier.close()
 
-File("SquareWave_"+str(peclet)+str(damkohler)+".pvd").write(cC1)
+VTKFile("SquareWave_"+str(peclet)+str(damkohler)+".pvd").write(cC1)
