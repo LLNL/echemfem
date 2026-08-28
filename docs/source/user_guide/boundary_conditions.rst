@@ -39,10 +39,10 @@ Here are the different options for ``boundary_markers`` keys:
 
 .. math::
 
-    \begin{align}
+    \begin{aligned}
     \mathbf N_k \cdot \mathbf n &= K_{k,MT} (c_k - c_{k,\mathrm{bulk}}), \\
     \Phi_2 &= 0.
-    \end{align}
+    \end{aligned}
 
 * ``"neumann"``: Neumann boundary condition defined through the method :meth:`echemfem.EchemSolver.neumann`.
 * ``"gas"``:  Dirichlet boundary condition for concentrations using the value ``"gas"`` if provided in :doc:`conc_params` for species :math:`k`.
@@ -59,4 +59,3 @@ Here are the different options for ``boundary_markers`` keys:
    \epsilon_0\epsilon_\mathrm{r} \nabla \Phi_2 \cdot \mathbf{n}= \sigma
 
 * Charge-transfer reactions: a custom :py:class:`str` can be passed to name the electrodes used in surface charge-transfer reactions defined using :doc:`echem_params`.
-
